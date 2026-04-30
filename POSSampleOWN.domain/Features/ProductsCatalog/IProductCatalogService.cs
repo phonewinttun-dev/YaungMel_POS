@@ -1,4 +1,4 @@
-using POSSampleOWN.DTOs;
+using POSSampleOWN.domain.DTOs;
 using POSSampleOWN.Responses;
 
 namespace POSSampleOWN.domain.Features.ProductsCatalog

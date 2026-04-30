@@ -1,4 +1,5 @@
-﻿using POSSampleOWN.DTOs;
+﻿using POSSampleOWN.domain.DTOs;
+using POSSampleOWN.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;

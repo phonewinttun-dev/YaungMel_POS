@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using POSSampleOWN.DTOs;
 using POSSampleOWN.Responses;
 using System.Threading.Tasks;
 using System.Security.Claims;
 using POSSampleOWN.domain.Features.ProductsCatalog;
+using POSSampleOWN.domain.DTOs;
 
 namespace POSSampleOWN.Controllers
 {

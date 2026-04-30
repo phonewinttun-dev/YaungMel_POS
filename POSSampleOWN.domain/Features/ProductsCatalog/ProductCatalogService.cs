@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using POSSampleOWN.database.Data;
-using POSSampleOWN.DTOs;
 using POSSampleOWN.database.Models;
 using POSSampleOWN.Responses;
 using System;
@@ -8,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using POSSampleOWN.domain.DTOs;
 
 namespace POSSampleOWN.domain.Features.ProductsCatalog
 {
@@ -52,6 +52,50 @@ namespace POSSampleOWN.domain.Features.ProductsCatalog
             }
         }
 
+        #endregion
+
+        #region get Product Pagination
+        public async Task<ApiResponse<ProductListResponseDTO>> GetProductsAsync(int pageNo, int pageSize)
+        {
+            try
+            {
+                var totalItems = await _db.Products
+                    .AsNoTracking()
+                    .CountAsync();
+
+                 var pageCount = totalItems / pageSize;
+
+                var products = await _db.Products
+                    .AsNoTracking()
+                    .OrderByDescending(p => p.Id) 
+                    .Skip((pageNo - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(p => new ProductDTO
+                    {
+                        Id = p.Id,
+                        Name = p.Name,
+                        Description = p.Description,
+                        Price = p.Price,
+                        StockQuantity = p.StockQuantity,
+                        CategoryId = p.CategoryId,
+                        DeleteFlag = p.DeleteFlag,
+                        IsActive = p.IsActive,
+                    })
+                    .ToListAsync();
+
+                var result = new ProductListResponseDTO
+                {
+                    Items = products,
+                    PageSetting = new PageSettingDTO(pageNo, pageSize, pageCount)
+                };
+
+                return ApiResponse<ProductListResponseDTO>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse<ProductListResponseDTO>.Fail($"Error: {ex.Message}");
+            }
+        }
         #endregion
 
         #region get active products by id
@@ -341,6 +385,45 @@ namespace POSSampleOWN.domain.Features.ProductsCatalog
             catch (Exception ex)
             {
                 return ApiResponse<List<CategoryDTO>>.Fail(ex.Message);
+            }
+        }
+        #endregion
+
+        #region get categories pagination 
+        public async Task<ApiResponse<CategoryListResponseModel>> GetCategoriesAsync(int pageNo, int pageSize)
+        {
+            try
+            {
+                var totalItems = await _db.Categories
+                    .AsNoTracking()
+                    .CountAsync();
+
+                var pageCount = totalItems / pageSize;
+
+                var categories = await _db.Categories
+                    .AsNoTracking()
+                    .OrderByDescending(c => c.Id)
+                    .Skip((pageNo - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(c => new CategoryDTO
+                    {
+                        Id = c.Id,
+                        Name = c.Name,
+                        Description = c.Description
+                    })
+                    .ToListAsync();
+
+                var result = new CategoryListResponseModel
+                {
+                    Items = categories,
+                    PageSetting = new PageSettingDTO(pageNo, pageSize, pageCount)
+                };
+
+                return ApiResponse<CategoryListResponseModel>.Success(result);
+            }
+            catch (Exception ex)
+            {
+                return ApiResponse<CategoryListResponseModel>.Fail($"Error: {ex.Message}");
             }
         }
         #endregion

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using POSSampleOWN.database.Data;
 using POSSampleOWN.database.Models;
+using POSSampleOWN.domain.DTOs;
 using POSSampleOWN.DTOs;
 using System;
 using System.Collections.Generic;

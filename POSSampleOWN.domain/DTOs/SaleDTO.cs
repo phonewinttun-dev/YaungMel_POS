@@ -42,3 +42,8 @@ public class CreateSaleItemDTO
     public int Quantity { get; set; }
 }
 
+public class SaleListResponseDTO
+{
+    public List<SaleDTO> Items { get; set; } = null!;
+    public PageSettingDTO PageSetting { get; set; } = null!;
+}

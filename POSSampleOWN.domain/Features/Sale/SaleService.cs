@@ -138,6 +138,51 @@ public class SaleService : ISaleService
     }
     #endregion
 
+    #region Get All Sale Paignation 
+    public async Task<ApiResponse<SaleListResponseDTO>> GetSalesAsync(int pageNo, int pageSize)
+    {
+        try
+        {
+            // double time hitting to database 
+            var totalItems = await _db.Sales.CountAsync();
+
+            var pageCount = totalItems / pageSize;
+
+            var sales = await _db.Sales
+                .AsNoTracking()
+                .OrderByDescending(s => s.Id)
+                .Skip((pageNo - 1) * pageSize) 
+                .Take(pageSize)              
+                .Select(sale => new SaleDTO
+                {
+                    Id = sale.Id,
+                    TotalPrice = sale.TotalPrice,
+                    TotalPriceFormatted = sale.TotalPrice.ToString("N0"),
+                    VoucherCode = sale.VoucherCode,
+                    SaleItems = sale.SaleItems.Select(item => new SaleItemDTO
+                    {
+                        ProductName = item.Product.Name ?? "Unknown Product",
+                        Quantity = item.Quantity,
+                        Price = item.Price,
+                        PriceFormatted = item.Price.ToString("N0")
+                    }).ToList()
+                })
+                .ToListAsync();
+
+            var result = new SaleListResponseDTO
+            {
+                Items = sales,
+                PageSetting = new PageSettingDTO(pageNo, pageSize, pageCount)
+            };
+
+            return ApiResponse<SaleListResponseDTO>.Success(result);
+        }
+        catch (Exception ex)
+        {
+            return ApiResponse<SaleListResponseDTO>.Fail($"Error: {ex.Message}");
+        }
+    }
+    #endregion
     #region Get Sale By Voucher code
     public async Task<ApiResponse<SaleDTO>> GetSaleByVoucherCodeAsync(string  voucherCode)
     {
