@@ -30,21 +30,30 @@ namespace POSSampleOWN.Controllers
 
         // GET: api/sales
         [HttpGet]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
-            var result = _service.GetAllSales();
+            var result =await  _service.GetAllSalesAsync();
             return Ok(result);
         }
 
+        // GET: api/sales/paged?pageNo=1&pageSize=10
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetSalesPaged([FromQuery] int pageNo = 1, [FromQuery] int pageSize = 10)
+        {
+            if (pageNo <= 0 || pageSize <= 0)
+            {
+                return BadRequest("Page number and page size must be greater than zero.");
+            }
+            var result = await _service.GetSalesAsync(pageNo, pageSize);
+
+            if (!result.IsSuccess)  return BadRequest(result);
+            return Ok(result);
+        }
         // GET: api/sales/{id}
         [HttpGet("{id}")]
-        public IActionResult GetByVoucherCode(string voucherCode)
+        public async Task<IActionResult> GetByVoucherCode(string voucherCode)
         {
-            var result = _service.GetSaleByVouncherCode(voucherCode);
-            if (!result.IsSuccess)
-            {
-                return NotFound(result);
-            }
+            var result = await _service.GetSaleByVoucherCodeAsync(voucherCode);
             return Ok(result);
         }
 

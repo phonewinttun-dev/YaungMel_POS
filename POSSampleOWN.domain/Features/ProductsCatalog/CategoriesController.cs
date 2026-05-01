@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using POSSampleOWN.DTOs;
 using POSSampleOWN.Responses;
 using System.Threading.Tasks;
 using System.Security.Claims;
 using POSSampleOWN.domain.Features.ProductsCatalog;
+using POSSampleOWN.domain.DTOs;
 
 namespace POSSampleOWN.Controllers
 {
@@ -34,6 +34,22 @@ namespace POSSampleOWN.Controllers
             return Ok(result);
         }
 
+        // GET: api/categories/paged?pageNo=1&pageSize=10
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetCaetgoryByPage([FromQuery] int pageNo = 1, [FromQuery] int pageSize = 10)
+        {
+            if (pageNo <= 0 || pageSize <= 0)
+            {
+                return BadRequest("Page number and page size must be greater than zero.");
+            }
+
+            var result = await _service.GetCategoriesAsync(pageNo, pageSize);
+
+            if (!result.IsSuccess) return BadRequest(result);
+
+            return Ok(result);
+        }
+
         // GET: api/categories/{id}
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
@@ -58,8 +74,7 @@ namespace POSSampleOWN.Controllers
 
             return CreatedAtAction(
                 nameof(GetById),
-                new { id = result.Data!.Id },
-                result);
+                new { id = result.Data!.Id },result);
         }
 
         // PATCH: api/categories/{id}

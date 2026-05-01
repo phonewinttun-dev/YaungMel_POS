@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,7 +38,7 @@ namespace POSSampleOWN.domain.Features
                     client.BaseAddress = new Uri(baseUrl);
                     var systemId = builder.Configuration["LoyaltyApiSettings:SystemId"];
                     client.DefaultRequestHeaders.Add("X-System-Id", systemId);
-                });
+                }).AddStandardResilienceHandler();
             }
             else
             {

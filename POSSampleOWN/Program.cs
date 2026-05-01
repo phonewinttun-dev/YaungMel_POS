@@ -58,7 +58,6 @@ try
     });
     });
 
-
     // Add JWT Authentication
     var jwtSettings = builder.Configuration.GetSection("JwtSettings");
     var secretKey = jwtSettings["SecretKey"] ?? "default_secret_key_at_least_32_chars_long";
@@ -83,9 +82,6 @@ try
         };
     });
 
-
-    
-
     // Add CORS Policy
     builder.Services.AddCors(options =>
     {
@@ -104,6 +100,7 @@ try
         app.MapSwagger("/openapi/{documentName}.json");
         app.MapScalarApiReference();
     }
+    
 
     app.UseHttpsRedirection();
     app.UseCors("AllowAll");

@@ -1,11 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using POSSampleOWN.domain.Features.ProductsCatalog;
-using POSSampleOWN.DTOs;
 using POSSampleOWN.database.Models;
 using POSSampleOWN.Responses;
 using System.Threading.Tasks;
 using System.Security.Claims;
+using POSSampleOWN.domain.DTOs;
 
 
 namespace POSSampleOWN.Controllers
@@ -33,6 +33,21 @@ namespace POSSampleOWN.Controllers
         public async Task<IActionResult> GetAll()
         {
             var result = await _service.GetAllProductsAsync();
+            return Ok(result);
+        }
+
+        // GET: api/products/paged?pageNo=1&pageSize=10
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetProductsPaged([FromQuery] int pageNo = 1, [FromQuery] int pageSize = 10)
+        {
+            if (pageNo <= 0 || pageSize <= 0)
+            {
+                return BadRequest("Page number and page size must be greater than zero.");
+            }
+            var result = await _service.GetProductsAsync(pageNo, pageSize);
+
+            if (!result.IsSuccess) return BadRequest(result);
+
             return Ok(result);
         }
 

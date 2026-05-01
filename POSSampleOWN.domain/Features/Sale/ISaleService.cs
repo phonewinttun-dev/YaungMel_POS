@@ -1,3 +1,4 @@
+using POSSampleOWN.database.Models;
 using POSSampleOWN.domain.DTOs;
 using POSSampleOWN.Responses;
 using System;
@@ -11,10 +12,12 @@ namespace POSSampleOWN.domain.Features.Sale
     public interface ISaleService
     {
         Task<ApiResponse<SaleDTO>> CreateSaleAsync(CreateSaleDTO reqSale, int userId);
-        ApiResponse<List<SaleDTO>> GetAllSales();
-        ApiResponse<SaleDTO> GetSaleByVouncherCode(string voucherCode);
+        Task<ApiResponse<List<SaleDTO>>> GetAllSalesAsync();
+        Task<ApiResponse<SaleListResponseDTO>> GetSalesAsync(int pageNo, int pageSize);
+
+        Task<ApiResponse<SaleDTO>> GetSaleByVoucherCodeAsync(string voucherCode);
         bool ValidateSale(CreateSaleDTO sale);
-        decimal TotalPrice(CreateSaleDTO reqSale);
-        Task<decimal> SubPrice(CreateSaleItemDTO reqSaleItem);
+        decimal TotalPrice(CreateSaleDTO reqSale, Dictionary<int, Tbl_Product> products);
+        decimal SubPrice(decimal price, int quantity);
     }
 }

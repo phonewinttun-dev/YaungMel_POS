@@ -7,6 +7,7 @@ using POSSampleOWN.Responses;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -45,28 +46,34 @@ public class SaleService : ISaleService
 
             if (product.StockQuantity < item.Quantity)
                 return ApiResponse<SaleDTO>.Fail($"Insufficient stock for {product.Name}.");
-
-            // reduce stock quantity
-            product.StockQuantity -= item.Quantity;
         }
 
         using var transaction = await _db.Database.BeginTransactionAsync();
         try
         {
-            decimal totalPrice = TotalPrice(reqSale);
+            
+            decimal totalPrice = TotalPrice(reqSale, products);
             var saveModel = new Tbl_Sale
             {
                 TotalPrice = totalPrice,
-                VoucherCode = "YM-" + DateTime.Now.ToString("yyyyMMddHHmmss"),
+                VoucherCode = "YM-" + DateTime.UtcNow.ToString("yyyyMMddHHmmss"),
                 CreatedAt = DateTime.UtcNow,
-                CreatedBy = userId
+                CreatedBy = userId,
             };
 
-            saveModel.SaleItems = reqSale.Items.Select(item => new Tbl_SaleItem
+            saveModel.SaleItems = reqSale.Items.Select(item =>
             {
-                ProductId = item.ProductId,
-                Quantity = item.Quantity,
-                Price = products[item.ProductId].Price
+                var product = products[item.ProductId];
+
+                // Stock deduction
+                product.StockQuantity -= item.Quantity;
+
+                return new Tbl_SaleItem
+                {
+                    ProductId = item.ProductId,
+                    Quantity = item.Quantity,
+                    Price = product.Price
+                };
             }).ToList();
 
             _db.Sales.Add(saveModel);
@@ -77,13 +84,15 @@ public class SaleService : ISaleService
             {
                 Id = saveModel.Id,
                 TotalPrice = saveModel.TotalPrice,
+                TotalPriceFormatted = saveModel.TotalPrice.ToString("N0"),
                 VoucherCode = saveModel.VoucherCode,
                 SaleItems = saveModel.SaleItems.Select(x => new SaleItemDTO
                 {
                     // Safely get the name from the dictionary we built earlier
-                    ProductName = products.TryGetValue(x.ProductId, out var p) ? p.Name : "Unknown Product",
+                    ProductName = products[x.ProductId].Name,
                     Quantity = x.Quantity,
-                    Price = x.Price
+                    Price = x.Price,
+                    PriceFormatted = x.Price.ToString("N0")
                 }).ToList()
             };
 
@@ -98,31 +107,28 @@ public class SaleService : ISaleService
     #endregion
 
     #region Get All Sales
-    public ApiResponse<List<SaleDTO>> GetAllSales()
+    public async Task<ApiResponse<List<SaleDTO>>> GetAllSalesAsync()
     {
         try
         {
-            var sales = _db.Sales
-                .Include(s => s.SaleItems)
-                .OrderByDescending(s => s.Id)
-                .ToList();
-
-            var resModel = sales.Select(sale => new SaleDTO
+            var resModel = await _db.Sales
+            .AsNoTracking()
+            .OrderByDescending(s => s.Id)
+            .Select(sale => new SaleDTO
             {
                 Id = sale.Id,
                 TotalPrice = sale.TotalPrice,
+                TotalPriceFormatted = sale.TotalPrice.ToString("N0"),
                 VoucherCode = sale.VoucherCode,
-                SaleItems = sale.SaleItems.Select(x => new SaleItemDTO
+                SaleItems = sale.SaleItems.Select(item => new SaleItemDTO
                 {
-                    ProductName = _db.Products
-                        .Where(p => p.Id == x.ProductId)
-                        .Select(p => p.Name)
-                        .FirstOrDefault() ?? "Unknown",
-                    Quantity = x.Quantity,
-                    Price = x.Price
+                    ProductName = item.Product.Name ?? "Unknown Product",
+                    Quantity = item.Quantity,
+                    Price = item.Price,
+                    PriceFormatted = item.Price.ToString("N0")
                 }).ToList()
-            }).ToList();
-
+            })
+            .ToListAsync();
             return ApiResponse<List<SaleDTO>>.Success(resModel);
         }
         catch (Exception ex)
@@ -132,26 +138,77 @@ public class SaleService : ISaleService
     }
     #endregion
 
-    #region Get Sale By Id
-    public ApiResponse<SaleDTO> GetSaleByVouncherCode(string  voucherCode)
+    #region Get All Sale Paignation 
+    public async Task<ApiResponse<SaleListResponseDTO>> GetSalesAsync(int pageNo, int pageSize)
     {
-        var sale = _db.Sales.Include(s => s.SaleItems).FirstOrDefault(s => s.VoucherCode == voucherCode);
+        try
+        {
+            // double time hitting to database 
+            var totalItems = await _db.Sales.CountAsync();
 
-        if (sale == null)
+            var pageCount = totalItems / pageSize;
+            if(totalItems % pageSize > 0) pageCount++;
+
+            var sales = await _db.Sales
+                .AsNoTracking()
+                .OrderByDescending(s => s.Id)
+                .Skip((pageNo - 1) * pageSize) 
+                .Take(pageSize)              
+                .Select(sale => new SaleDTO
+                {
+                    Id = sale.Id,
+                    TotalPrice = sale.TotalPrice,
+                    TotalPriceFormatted = sale.TotalPrice.ToString("N0"),
+                    VoucherCode = sale.VoucherCode,
+                    SaleItems = sale.SaleItems.Select(item => new SaleItemDTO
+                    {
+                        ProductName = item.Product.Name ?? "Unknown Product",
+                        Quantity = item.Quantity,
+                        Price = item.Price,
+                        PriceFormatted = item.Price.ToString("N0")
+                    }).ToList()
+                })
+                .ToListAsync();
+
+            var result = new SaleListResponseDTO
+            {
+                Items = sales,
+                PageSetting = new PageSettingDTO(pageNo, pageSize, pageCount)
+            };
+
+            return ApiResponse<SaleListResponseDTO>.Success(result);
+        }
+        catch (Exception ex)
+        {
+            return ApiResponse<SaleListResponseDTO>.Fail($"Error: {ex.Message}");
+        }
+    }
+    #endregion
+    #region Get Sale By Voucher code
+    public async Task<ApiResponse<SaleDTO>> GetSaleByVoucherCodeAsync(string  voucherCode)
+    {
+        var sale = await _db.Sales
+            .Include(s => s.SaleItems)
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.VoucherCode == voucherCode);
+
+        if (sale is null)
             return ApiResponse<SaleDTO>.Fail("Sale not found.");
+
+        var product = await ActiveProduct.ToDictionaryAsync(p => p.Id, p => p.Name);
 
         var resModel = new SaleDTO
         {
             Id = sale.Id,
             TotalPrice = sale.TotalPrice,
+            TotalPriceFormatted = sale.TotalPrice.ToString("N0"),
             VoucherCode = sale.VoucherCode,
             SaleItems = sale.SaleItems.Select(x => new SaleItemDTO
             {
-                ProductName = _db.Products.Where(p => p.Id == x.ProductId)
-                .Select(p => p.Name).
-                FirstOrDefault() ?? "",
+                ProductName = product.TryGetValue(x.ProductId, out var name) ? name : "Unknown Product",
                 Quantity = x.Quantity,
-                Price = x.Price
+                Price = x.Price,
+                PriceFormatted = x.Price.ToString("N0")
             }).ToList()
         };
         return ApiResponse<SaleDTO>.Success(resModel);
@@ -175,26 +232,25 @@ public class SaleService : ISaleService
     #endregion
 
     #region total price
-    public decimal TotalPrice(CreateSaleDTO reqSale)
+    public decimal TotalPrice(CreateSaleDTO reqSale, Dictionary<int, Tbl_Product> products)
     {
         decimal totalPrice = 0;
         foreach (var item in reqSale.Items)
         {
-            var price = SubPrice(item).Result;
-            totalPrice += price;
+            // Get the price from our pre-loaded dictionary
+            if (products.TryGetValue(item.ProductId, out var product))
+            {
+                totalPrice += SubPrice(product.Price, item.Quantity);
+            }
         }
         return totalPrice;
     }
     #endregion
 
     #region sub price
-    public async Task<decimal> SubPrice(CreateSaleItemDTO reqSaleItem)
+    public decimal SubPrice(decimal price, int quantity)
     {
-        var item = await _db.Products.FirstOrDefaultAsync( 
-            x => x.Id == reqSaleItem.ProductId );
-        decimal price = item?.Price ?? 0;
-        return price * reqSaleItem.Quantity;
-
+        return price * quantity;
     }
     #endregion
 

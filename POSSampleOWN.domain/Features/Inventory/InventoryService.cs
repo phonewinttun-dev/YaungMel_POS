@@ -1,9 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using POSSampleOWN.database.Data;
-using POSSampleOWN.DTOs;
 using POSSampleOWN.database.Models;
 using POSSampleOWN.Responses;
 using Serilog.Core;
+using POSSampleOWN.domain.DTOs;
 
 namespace POSSampleOWN.domain.Features.Inventory
 {
