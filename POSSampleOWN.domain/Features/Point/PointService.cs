@@ -92,8 +92,7 @@ public class PointService : IPointService
     {
         try
         {
-            string SystemId = "YaungMel";
-            var url = $"accounts/lookup/{SystemId}/{userId}";
+            var url = $"accounts/lookup/{userId}";
 
             var requestMessage = new HttpRequestMessage(HttpMethod.Get, url);
 
