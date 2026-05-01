@@ -13,6 +13,8 @@ namespace POSSampleOWN.domain.Features.Sale
     {
         Task<ApiResponse<SaleDTO>> CreateSaleAsync(CreateSaleDTO reqSale, int userId);
         Task<ApiResponse<List<SaleDTO>>> GetAllSalesAsync();
+        Task<ApiResponse<SaleListResponseDTO>> GetSalesAsync(int pageNo, int pageSize);
+
         Task<ApiResponse<SaleDTO>> GetSaleByVoucherCodeAsync(string voucherCode);
         bool ValidateSale(CreateSaleDTO sale);
         decimal TotalPrice(CreateSaleDTO reqSale, Dictionary<int, Tbl_Product> products);

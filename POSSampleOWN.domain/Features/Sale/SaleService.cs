@@ -147,6 +147,7 @@ public class SaleService : ISaleService
             var totalItems = await _db.Sales.CountAsync();
 
             var pageCount = totalItems / pageSize;
+            if(totalItems % pageSize > 0) pageCount++;
 
             var sales = await _db.Sales
                 .AsNoTracking()

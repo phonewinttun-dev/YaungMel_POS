@@ -64,6 +64,7 @@ namespace POSSampleOWN.domain.Features.ProductsCatalog
                     .CountAsync();
 
                  var pageCount = totalItems / pageSize;
+                 if (totalItems % pageSize > 0) pageCount++;
 
                 var products = await _db.Products
                     .AsNoTracking()
@@ -399,6 +400,7 @@ namespace POSSampleOWN.domain.Features.ProductsCatalog
                     .CountAsync();
 
                 var pageCount = totalItems / pageSize;
+                if (totalItems % pageSize > 0) pageCount++;
 
                 var categories = await _db.Categories
                     .AsNoTracking()

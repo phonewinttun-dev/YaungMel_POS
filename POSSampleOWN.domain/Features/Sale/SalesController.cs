@@ -36,6 +36,19 @@ namespace POSSampleOWN.Controllers
             return Ok(result);
         }
 
+        // GET: api/sales/paged?pageNo=1&pageSize=10
+        [HttpGet("paged")]
+        public async Task<IActionResult> GetSalesPaged([FromQuery] int pageNo = 1, [FromQuery] int pageSize = 10)
+        {
+            if (pageNo <= 0 || pageSize <= 0)
+            {
+                return BadRequest("Page number and page size must be greater than zero.");
+            }
+            var result = await _service.GetSalesAsync(pageNo, pageSize);
+
+            if (!result.IsSuccess)  return BadRequest(result);
+            return Ok(result);
+        }
         // GET: api/sales/{id}
         [HttpGet("{id}")]
         public async Task<IActionResult> GetByVoucherCode(string voucherCode)
