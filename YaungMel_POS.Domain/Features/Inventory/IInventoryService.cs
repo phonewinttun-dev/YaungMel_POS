@@ -5,9 +5,9 @@ namespace YaungMel_POS.domain.Features.Inventory
 {
     public interface IInventoryService
     {
-        Task<ApiResponse<bool>> IncreaseStockAsync(int productId, int quantity);
-        Task<ApiResponse<bool>> DecreaseStockAsync(int productId, int quantity);
-        Task<ApiResponse<List<ProductDTO>>> GetLowStockAlertsAsync(int lowStock);
-        Task<ApiResponse<bool>> UpdatePriceAsync(int productId, decimal newPrice);
+        Task<Result<bool>> IncreaseStockAsync(int productId, int quantity);
+        Task<Result<bool>> DecreaseStockAsync(int productId, int quantity);
+        Task<Result<List<ProductDTO>>> GetLowStockAlertsAsync(int lowStock);
+        Task<Result<bool>> UpdatePriceAsync(int productId, decimal newPrice);
     }
 }

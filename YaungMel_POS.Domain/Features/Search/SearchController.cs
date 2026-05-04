@@ -29,7 +29,7 @@ namespace YaungMel_POS.domain.Features.Search
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ApiResponse<object>
+                return BadRequest(new Result<object>
                 {
                     IsSuccess = false,
                     Message = "Invalid search parameters."
@@ -38,7 +38,7 @@ namespace YaungMel_POS.domain.Features.Search
             try
             {
                 var products = await _service.SearchProductsAsync(searchRequest);
-                return Ok(new ApiResponse<object>
+                return Ok(new Result<object>
                 {
                     IsSuccess = true,
                     Message = "Search completed successfully.",
@@ -47,7 +47,7 @@ namespace YaungMel_POS.domain.Features.Search
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new ApiResponse<object>
+                return StatusCode(500, new Result<object>
                 {
                     IsSuccess = false,
                     Message = $"An error occurred while searching for products: {ex.Message}"
@@ -61,7 +61,7 @@ namespace YaungMel_POS.domain.Features.Search
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new ApiResponse<object>
+                return BadRequest(new Result<object>
                 {
                     IsSuccess = false,
                     Message = "Invalid search parameters."
@@ -70,7 +70,7 @@ namespace YaungMel_POS.domain.Features.Search
             try
             {
                 var categories = await _service.SearchCategoryAsync(searchRequest);
-                return Ok(new ApiResponse<object>
+                return Ok(new Result<object>
                 {
                     IsSuccess = true,
                     Message = "Search completed successfully.",
@@ -79,7 +79,7 @@ namespace YaungMel_POS.domain.Features.Search
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new ApiResponse<object>
+                return StatusCode(500, new Result<object>
                 {
                     IsSuccess = false,
                     Message = $"An error occurred while searching for categories: {ex.Message}"

@@ -28,10 +28,10 @@ public class SaleService : ISaleService
     private IQueryable<Tbl_Product> ActiveProduct => _db.Products.Where(p => !p.DeleteFlag);
 
     #region Create Sale
-    public async Task<ApiResponse<SaleDTO>> CreateSaleAsync(CreateSaleDTO reqSale, int userId)
+    public async Task<Result<SaleDTO>> CreateSaleAsync(CreateSaleDTO reqSale, int userId)
     {
         if (!ValidateSale(reqSale))
-            return ApiResponse<SaleDTO>.Fail("Invalid sale data.");
+            return Result<SaleDTO>.SystemError("Invalid sale data.");
 
         var productIds = reqSale.Items.Select(x => x.ProductId).Distinct().ToList();
         var products = await ActiveProduct
@@ -42,10 +42,10 @@ public class SaleService : ISaleService
         foreach (var item in reqSale.Items)
         {
             if (!products.TryGetValue(item.ProductId, out var product))
-                return ApiResponse<SaleDTO>.Fail($"Product with ID: {item.ProductId} not found.");
+                return Result<SaleDTO>.SystemError($"Product with ID: {item.ProductId} not found.");
 
             if (product.StockQuantity < item.Quantity)
-                return ApiResponse<SaleDTO>.Fail($"Insufficient stock for {product.Name}.");
+                return Result<SaleDTO>.SystemError($"Insufficient stock for {product.Name}.");
         }
 
         using var transaction = await _db.Database.BeginTransactionAsync();
@@ -96,18 +96,18 @@ public class SaleService : ISaleService
                 }).ToList()
             };
 
-            return ApiResponse<SaleDTO>.Success(resModel);
+            return Result<SaleDTO>.Success(resModel);
         }
         catch (Exception ex)
         {
             await transaction.RollbackAsync();
-            return ApiResponse<SaleDTO>.Fail($"Error: {ex.Message}");
+            return Result<SaleDTO>.SystemError($"Error: {ex.Message}");
         }
     }
     #endregion
 
     #region Get All Sale Paignation 
-    public async Task<ApiResponse<SaleListResponseDTO>> GetSalesAsync(int pageNo, int pageSize)
+    public async Task<Result<SaleListResponseDTO>> GetSalesAsync(int pageNo, int pageSize)
     {
         try
         {
@@ -144,43 +144,50 @@ public class SaleService : ISaleService
                 PageSetting = new PageSettingDTO(pageNo, pageSize, pageCount)
             };
 
-            return ApiResponse<SaleListResponseDTO>.Success(result);
+            return Result<SaleListResponseDTO>.Success(result);
         }
         catch (Exception ex)
         {
-            return ApiResponse<SaleListResponseDTO>.Fail($"Error: {ex.Message}");
+            return Result<SaleListResponseDTO>.SystemError($"Error: {ex.Message}");
         }
     }
     #endregion
 
     #region Get Sale By Voucher code
-    public async Task<ApiResponse<SaleDTO>> GetSaleByVoucherCodeAsync(string  voucherCode)
+    public async Task<Result<SaleDTO>> GetSaleByVoucherCodeAsync(string  voucherCode)
     {
-        var sale = await _db.Sales
-            .Include(s => s.SaleItems)
-            .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.VoucherCode == voucherCode);
-
-        if (sale is null)
-            return ApiResponse<SaleDTO>.Fail("Sale not found.");
-
-        var product = await ActiveProduct.ToDictionaryAsync(p => p.Id, p => p.Name);
-
-        var resModel = new SaleDTO
+        try
         {
-            Id = sale.Id,
-            TotalPrice = sale.TotalPrice,
-            TotalPriceFormatted = sale.TotalPrice.ToString("N0"),
-            VoucherCode = sale.VoucherCode,
-            SaleItems = sale.SaleItems.Select(x => new SaleItemDTO
+            var sale = await _db.Sales
+           .Include(s => s.SaleItems)
+           .AsNoTracking()
+           .FirstOrDefaultAsync(s => s.VoucherCode == voucherCode);
+
+            if (sale is null)
+                return Result<SaleDTO>.NotFound("Sale not found.");
+
+            var product = await ActiveProduct.ToDictionaryAsync(p => p.Id, p => p.Name);
+
+            var resModel = new SaleDTO
             {
-                ProductName = product.TryGetValue(x.ProductId, out var name) ? name : "Unknown Product",
-                Quantity = x.Quantity,
-                Price = x.Price,
-                PriceFormatted = x.Price.ToString("N0")
-            }).ToList()
-        };
-        return ApiResponse<SaleDTO>.Success(resModel);
+                Id = sale.Id,
+                TotalPrice = sale.TotalPrice,
+                TotalPriceFormatted = sale.TotalPrice.ToString("N0"),
+                VoucherCode = sale.VoucherCode,
+                SaleItems = sale.SaleItems.Select(x => new SaleItemDTO
+                {
+                    ProductName = product.TryGetValue(x.ProductId, out var name) ? name : "Unknown Product",
+                    Quantity = x.Quantity,
+                    Price = x.Price,
+                    PriceFormatted = x.Price.ToString("N0")
+                }).ToList()
+            };
+            return Result<SaleDTO>.Success(resModel);
+        }
+        catch (Exception ex)
+        {
+            return Result<SaleDTO>.SystemError(ex.Message); 
+        }
     }
     #endregion
 

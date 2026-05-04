@@ -115,7 +115,7 @@ namespace YaungMel_POS.domain.Features.ProductsCatalog
         public async Task<IActionResult> Delete(int id, [FromQuery] uint version)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ApiResponse<object>.Fail("Invalid product ID."));
+                return BadRequest(Result<object>.SystemError("Invalid product ID."));
 
             var result = await _service.DeleteProductAsync(id, version, GetCurrentUserId());
 

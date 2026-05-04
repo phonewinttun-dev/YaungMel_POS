@@ -32,7 +32,7 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Register([FromBody] UserRegisterRequest request)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ApiResponse<object>.Fail("Invalid registration data."));
+            return BadRequest(Result<object>.SystemError("Invalid registration data."));
 
         var result = await _registerService.RegisterAsync(request);
 
@@ -49,13 +49,13 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         if (!ModelState.IsValid)
-            return BadRequest(ApiResponse<object>.Fail("Invalid login data."));
+            return BadRequest(Result<object>.SystemError("Invalid login data."));
 
         var result = await _authService.LoginAsync(request);
 
         if (result == null)
         {
-            return Unauthorized(ApiResponse<object>.Fail("Invalid mobile number or password."));
+            return Unauthorized(Result<object>.SystemError("Invalid mobile number or password."));
         }
 
         // Store refresh token in HttpOnly cookie
@@ -71,7 +71,7 @@ public class AuthController : ControllerBase
         // Clear refresh token from response body
         result.RefreshToken = string.Empty;
 
-        return Ok(ApiResponse<TokenResponse>.Success(result, "Login successful."));
+        return Ok(Result<TokenResponse>.Success(result, "Login successful."));
     }
 
     //[Authorize]

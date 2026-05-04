@@ -21,7 +21,7 @@ public class PointService : IPointService
     }
 
     #region Account
-    public async Task<ApiResponse<CreateAccountResDTO>> CreateAccountAsync(CreateAccountReqDTO request)
+    public async Task<Result<CreateAccountResDTO>> CreateAccountAsync(CreateAccountReqDTO request)
     {
         try
         {
@@ -40,19 +40,19 @@ public class PointService : IPointService
                 var result = await response.Content.ReadFromJsonAsync<CreateAccountResDTO>();
 
                 return result != null
-                    ? ApiResponse<CreateAccountResDTO>.Success(result, "Account created successfully.")
-                    : ApiResponse<CreateAccountResDTO>.Fail("Failed to parse created account data.");
+                    ? Result<CreateAccountResDTO>.Success(result, "Account created successfully.")
+                    : Result<CreateAccountResDTO>.SystemError("Failed to parse created account data.");
             }
 
             var errorContent = await response.Content.ReadAsStringAsync();
-            return ApiResponse<CreateAccountResDTO>.Fail($"Creation Failed: {response.StatusCode} - {errorContent}");
+            return Result<CreateAccountResDTO>.SystemError($"Creation Failed: {response.StatusCode} - {errorContent}");
         }
         catch (Exception ex)
         {
-            return ApiResponse<CreateAccountResDTO>.Fail($"Internal Error: {ex.Message}");
+            return Result<CreateAccountResDTO>.SystemError($"Internal Error: {ex.Message}");
         }
     }
-    public async Task<ApiResponse<AccountListResponseWrapper>> GetAccountsAsync(AccountListReqDTO request)
+    public async Task<Result<AccountListResponseWrapper>> GetAccountsAsync(AccountListReqDTO request)
     {
         try
         {
@@ -77,18 +77,18 @@ public class PointService : IPointService
             {
                 var result = await response.Content.ReadFromJsonAsync<AccountListResponseWrapper>();
                 return result != null
-                    ? ApiResponse<AccountListResponseWrapper>.Success(result)
-                    : ApiResponse<AccountListResponseWrapper>.Fail("No account data found.");
+                    ? Result<AccountListResponseWrapper>.Success(result)
+                    : Result<AccountListResponseWrapper>.SystemError("No account data found.");
             }
 
-            return ApiResponse<AccountListResponseWrapper>.Fail($"Error: {response.StatusCode}");
+            return Result<AccountListResponseWrapper>.SystemError($"Error: {response.StatusCode}");
         }
         catch (Exception ex)
         {
-            return ApiResponse<AccountListResponseWrapper>.Fail($"Internal Error: {ex.Message}");
+            return Result<AccountListResponseWrapper>.SystemError($"Internal Error: {ex.Message}");
         }
     }
-    public async Task<ApiResponse<AccountLookupResponse>> LookupAccountAsync(string  userId)
+    public async Task<Result<AccountLookupResponse>> LookupAccountAsync(string  userId)
     {
         try
         {
@@ -102,19 +102,19 @@ public class PointService : IPointService
             {
                 var result = await response.Content.ReadFromJsonAsync<AccountLookupResponse>();
                 return result != null
-                    ? ApiResponse<AccountLookupResponse>.Success(result)
-                    : ApiResponse<AccountLookupResponse>.Fail("Account detail not found.");
+                    ? Result<AccountLookupResponse>.Success(result)
+                    : Result<AccountLookupResponse>.SystemError("Account detail not found.");
             }
 
-            return ApiResponse<AccountLookupResponse>.Fail($"Error: {response.StatusCode}");
+            return Result<AccountLookupResponse>.SystemError($"Error: {response.StatusCode}");
         }
         catch (Exception ex)
         {
-            return ApiResponse<AccountLookupResponse>.Fail($"Internal Error: {ex.Message}");
+            return Result<AccountLookupResponse>.SystemError($"Internal Error: {ex.Message}");
         }
     }
 
-    public async Task<ApiResponse<CheckBalanceResDTO>> GetUserBalanceAsync(CheckBalanceReqDTO request)
+    public async Task<Result<CheckBalanceResDTO>> GetUserBalanceAsync(CheckBalanceReqDTO request)
     {
         try
         {
@@ -127,26 +127,26 @@ public class PointService : IPointService
             {
                 var data = await response.Content.ReadFromJsonAsync<CheckBalanceResDTO>();
                 return data != null
-                    ? ApiResponse<CheckBalanceResDTO>.Success(data)
-                    : ApiResponse<CheckBalanceResDTO>.Fail("Data not found.");
+                    ? Result<CheckBalanceResDTO>.Success(data)
+                    : Result<CheckBalanceResDTO>.SystemError("Data not found.");
             }
 
             if (response.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                return ApiResponse<CheckBalanceResDTO>.Fail("User not found in the system.");
+                return Result<CheckBalanceResDTO>.SystemError("User not found in the system.");
             }
 
-            return ApiResponse<CheckBalanceResDTO>.Fail($"Error: {response.StatusCode}");
+            return Result<CheckBalanceResDTO>.SystemError($"Error: {response.StatusCode}");
         }
         catch (Exception ex)
         {
-            return ApiResponse<CheckBalanceResDTO>.Fail($"Internal Error: {ex.Message}");
+            return Result<CheckBalanceResDTO>.SystemError($"Internal Error: {ex.Message}");
         }
     }
     #endregion
 
     #region Earn and Use
-    public async Task<ApiResponse<EarnPointResDTO>> EarnPointsAsync(EarnPointReqDTO request)
+    public async Task<Result<EarnPointResDTO>> EarnPointsAsync(EarnPointReqDTO request)
     {
         try
         {
@@ -157,19 +157,19 @@ public class PointService : IPointService
                 var result = await response.Content.ReadFromJsonAsync<EarnPointResDTO>();
 
                 return result != null
-                    ? ApiResponse<EarnPointResDTO>.Success(result, "Points earned successfully.")
-                    : ApiResponse<EarnPointResDTO>.Fail("Failed to parse response data.");
+                    ? Result<EarnPointResDTO>.Success(result, "Points earned successfully.")
+                    : Result<EarnPointResDTO>.SystemError("Failed to parse response data.");
             }
 
             var errorMessage = await response.Content.ReadAsStringAsync();
-            return ApiResponse<EarnPointResDTO>.Fail($"API Error: {response.StatusCode} - {errorMessage}");
+            return Result<EarnPointResDTO>.SystemError($"API Error: {response.StatusCode} - {errorMessage}");
         }
         catch (Exception ex)
         {
-            return ApiResponse<EarnPointResDTO>.Fail($"Internal Error: {ex.Message}");
+            return Result<EarnPointResDTO>.SystemError($"Internal Error: {ex.Message}");
         }
     }
-    public async Task<ApiResponse<List<PointHistoryResDTO>>> GetPointHistoryAsync(string accountId)
+    public async Task<Result<List<PointHistoryResDTO>>> GetPointHistoryAsync(string accountId)
     {
         try
         {
@@ -180,18 +180,18 @@ public class PointService : IPointService
                 var history = await response.Content.ReadFromJsonAsync<List<PointHistoryResDTO>>();
 
                 return history != null
-                    ? ApiResponse<List<PointHistoryResDTO>>.Success(history)
-                    : ApiResponse<List<PointHistoryResDTO>>.Fail("No history records found.");
+                    ? Result<List<PointHistoryResDTO>>.Success(history)
+                    : Result<List<PointHistoryResDTO>>.SystemError("No history records found.");
             }
 
-            return ApiResponse<List<PointHistoryResDTO>>.Fail($"Error: {response.StatusCode}");
+            return Result<List<PointHistoryResDTO>>.SystemError($"Error: {response.StatusCode}");
         }
         catch (Exception ex)
         {
-            return ApiResponse<List<PointHistoryResDTO>>.Fail($"Internal Error: {ex.Message}");
+            return Result<List<PointHistoryResDTO>>.SystemError($"Internal Error: {ex.Message}");
         }
     }
-    public async Task<ApiResponse<ClaimRewardResDTO>> ClaimRewardAsync(ClaimRewardReqDTO request)
+    public async Task<Result<ClaimRewardResDTO>> ClaimRewardAsync(ClaimRewardReqDTO request)
     {
         try
         {
@@ -201,20 +201,20 @@ public class PointService : IPointService
             {
                 var result = await response.Content.ReadFromJsonAsync<ClaimRewardResDTO>();
                 return result != null
-                    ? ApiResponse<ClaimRewardResDTO>.Success(result, "Redemption request created (Pending).")
-                    : ApiResponse<ClaimRewardResDTO>.Fail("Failed to process redemption response.");
+                    ? Result<ClaimRewardResDTO>.Success(result, "Redemption request created (Pending).")
+                    : Result<ClaimRewardResDTO>.SystemError("Failed to process redemption response.");
             }
 
 
             var errorDetail = await response.Content.ReadAsStringAsync();
-            return ApiResponse<ClaimRewardResDTO>.Fail($"Redemption Failed: {errorDetail}");
+            return Result<ClaimRewardResDTO>.SystemError($"Redemption Failed: {errorDetail}");
         }
         catch (Exception ex)
         {
-            return ApiResponse<ClaimRewardResDTO>.Fail($"Internal Error: {ex.Message}");
+            return Result<ClaimRewardResDTO>.SystemError($"Internal Error: {ex.Message}");
         }
     }
-    public async Task<ApiResponse<List<AvailableRewardResDTO>>> GetAvailableRewardsAsync()
+    public async Task<Result<List<AvailableRewardResDTO>>> GetAvailableRewardsAsync()
     {
         try
         {
@@ -225,21 +225,21 @@ public class PointService : IPointService
                 var rewards = await response.Content.ReadFromJsonAsync<List<AvailableRewardResDTO>>();
 
                 return rewards != null
-                    ? ApiResponse<List<AvailableRewardResDTO>>.Success(rewards, "Rewards retrieved successfully.")
-                    : ApiResponse<List<AvailableRewardResDTO>>.Fail("No rewards data found.");
+                    ? Result<List<AvailableRewardResDTO>>.Success(rewards, "Rewards retrieved successfully.")
+                    : Result<List<AvailableRewardResDTO>>.SystemError("No rewards data found.");
             }
 
-            return ApiResponse<List<AvailableRewardResDTO>>.Fail($"Failed to fetch rewards: {response.StatusCode}");
+            return Result<List<AvailableRewardResDTO>>.SystemError($"Failed to fetch rewards: {response.StatusCode}");
         }
         catch (Exception ex)
         {
-            return ApiResponse<List<AvailableRewardResDTO>>.Fail($"Internal Error: {ex.Message}");
+            return Result<List<AvailableRewardResDTO>>.SystemError($"Internal Error: {ex.Message}");
         }
     }
 
     #endregion
 
-    public async Task<ApiResponse<List<PendingRedemptionResDTO>>> GetPendingRedemptionsAsync()
+    public async Task<Result<List<PendingRedemptionResDTO>>> GetPendingRedemptionsAsync()
     {
         try
         {
@@ -250,18 +250,18 @@ public class PointService : IPointService
                 var redemptions = await response.Content.ReadFromJsonAsync<List<PendingRedemptionResDTO>>();
 
                 return redemptions != null
-                    ? ApiResponse<List<PendingRedemptionResDTO>>.Success(redemptions)
-                    : ApiResponse<List<PendingRedemptionResDTO>>.Fail("No pending redemptions found.");
+                    ? Result<List<PendingRedemptionResDTO>>.Success(redemptions)
+                    : Result<List<PendingRedemptionResDTO>>.SystemError("No pending redemptions found.");
             }
 
-            return ApiResponse<List<PendingRedemptionResDTO>>.Fail($"Error: {response.StatusCode}");
+            return Result<List<PendingRedemptionResDTO>>.SystemError($"Error: {response.StatusCode}");
         }
         catch (Exception ex)
         {
-            return ApiResponse<List<PendingRedemptionResDTO>>.Fail($"Internal Error: {ex.Message}");
+            return Result<List<PendingRedemptionResDTO>>.SystemError($"Internal Error: {ex.Message}");
         }
     }
-    public async Task<ApiResponse<bool>> UpdateRedemptionStatusAsync(string redemptionId, RedemptionStatus status)
+    public async Task<Result<bool>> UpdateRedemptionStatusAsync(string redemptionId, RedemptionStatus status)
     {
         try
         {
@@ -271,19 +271,19 @@ public class PointService : IPointService
 
             if (response.IsSuccessStatusCode)
             {
-                return ApiResponse<bool>.Success(true, $"Redemption status updated to {status}.");
+                return Result<bool>.Success(true, $"Redemption status updated to {status}.");
             }
 
             var errorMsg = await response.Content.ReadAsStringAsync();
-            return ApiResponse<bool>.Fail($"Update Failed: {response.StatusCode} - {errorMsg}");
+            return Result<bool>.SystemError($"Update Failed: {response.StatusCode} - {errorMsg}");
         }
         catch (Exception ex)
         {
-            return ApiResponse<bool>.Fail($"Internal Error: {ex.Message}");
+            return Result<bool>.SystemError($"Internal Error: {ex.Message}");
         }
     }
 
-    public async Task<ApiResponse<CreateRewardResDTO>> CreateRewardAsync(CreateRewardReqDTO request)
+    public async Task<Result<CreateRewardResDTO>> CreateRewardAsync(CreateRewardReqDTO request)
     {
         try
         {
@@ -296,16 +296,16 @@ public class PointService : IPointService
                 var result = await response.Content.ReadFromJsonAsync<CreateRewardResDTO>();
 
                 return result != null
-                    ? ApiResponse<CreateRewardResDTO>.Success(result, "Reward created successfully.")
-                    : ApiResponse<CreateRewardResDTO>.Fail("Failed to parse reward data.");
+                    ? Result<CreateRewardResDTO>.Success(result, "Reward created successfully.")
+                    : Result<CreateRewardResDTO>.SystemError("Failed to parse reward data.");
             }
 
             var errorContent = await response.Content.ReadAsStringAsync();
-            return ApiResponse<CreateRewardResDTO>.Fail($"Reward Creation Failed: {response.StatusCode} - {errorContent}");
+            return Result<CreateRewardResDTO>.SystemError($"Reward Creation Failed: {response.StatusCode} - {errorContent}");
         }
         catch (Exception ex)
         {
-            return ApiResponse<CreateRewardResDTO>.Fail($"Internal Error: {ex.Message}");
+            return Result<CreateRewardResDTO>.SystemError($"Internal Error: {ex.Message}");
         }
     }
 }

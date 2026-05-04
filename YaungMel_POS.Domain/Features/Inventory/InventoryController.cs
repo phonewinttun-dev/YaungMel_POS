@@ -21,7 +21,7 @@ namespace YaungMel_POS.domain.Features.Inventory
         [HttpPatch("increase-stock")]
         public async Task<IActionResult> IncreaseStock([FromBody] StockAdjustmentDTO request)
         {
-            if (!ModelState.IsValid) return BadRequest(ApiResponse<object>.Fail("Invalid request data."));
+            if (!ModelState.IsValid) return BadRequest(Result<object>.SystemError("Invalid request data."));
 
             var result = await _service.IncreaseStockAsync(request.ProductId, request.Quantity);
 
@@ -31,7 +31,7 @@ namespace YaungMel_POS.domain.Features.Inventory
         [HttpPatch("reduce-stock")]
         public async Task<IActionResult> ReduceStock([FromBody] StockAdjustmentDTO request)
         {
-            if (!ModelState.IsValid) return BadRequest(ApiResponse<object>.Fail("Invalid request data."));
+            if (!ModelState.IsValid) return BadRequest(Result<object>.SystemError("Invalid request data."));
 
             var result = await _service.DecreaseStockAsync(request.ProductId, request.Quantity);
 
@@ -48,7 +48,7 @@ namespace YaungMel_POS.domain.Features.Inventory
         [HttpPatch("{id}")]
         public async Task<IActionResult> UpdatePrice([FromBody] PriceUpdateDTO request)
         {
-            if (!ModelState.IsValid) return BadRequest(ApiResponse<object>.Fail("Invalid request data."));
+            if (!ModelState.IsValid) return BadRequest(Result<object>.SystemError("Invalid request data."));
 
             var result = await _service.UpdatePriceAsync(request.ProductId, request.NewPrice);
 

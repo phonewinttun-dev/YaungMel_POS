@@ -11,31 +11,31 @@ namespace YaungMel_POS.domain.Features.Point;
 
 public class DisabledPointService : IPointService
 {
-    public Task<ApiResponse<CreateAccountResDTO>> CreateAccountAsync(CreateAccountReqDTO request)
-        => Task.FromResult(ApiResponse<CreateAccountResDTO>.Fail("Point system is disabled"));
+    public Task<Result<CreateAccountResDTO>> CreateAccountAsync(CreateAccountReqDTO request)
+        => Task.FromResult(Result<CreateAccountResDTO>.SystemError("Point system is disabled"));
 
-    public Task<ApiResponse<AccountListResponseWrapper>> GetAccountsAsync(AccountListReqDTO request)
-        => Task.FromResult(ApiResponse<AccountListResponseWrapper>.Fail("Point system is disabled"));
-    public Task<ApiResponse<AccountLookupResponse>> LookupAccountAsync(string userId)
-        => Task.FromResult(ApiResponse<AccountLookupResponse>.Fail("Point system is disabled"));
-    public Task<ApiResponse<CheckBalanceResDTO>> GetUserBalanceAsync(CheckBalanceReqDTO request)
-        => Task.FromResult(ApiResponse<CheckBalanceResDTO>.Fail("Point system is disabled"));
+    public Task<Result<AccountListResponseWrapper>> GetAccountsAsync(AccountListReqDTO request)
+        => Task.FromResult(Result<AccountListResponseWrapper>.SystemError("Point system is disabled"));
+    public Task<Result<AccountLookupResponse>> LookupAccountAsync(string userId)
+        => Task.FromResult(Result<AccountLookupResponse>.SystemError("Point system is disabled"));
+    public Task<Result<CheckBalanceResDTO>> GetUserBalanceAsync(CheckBalanceReqDTO request)
+        => Task.FromResult(Result<CheckBalanceResDTO>.SystemError("Point system is disabled"));
 
-    public Task<ApiResponse<EarnPointResDTO>> EarnPointsAsync(EarnPointReqDTO request)
-        => Task.FromResult(ApiResponse<EarnPointResDTO>.Fail("Point system is disabled"));
+    public Task<Result<EarnPointResDTO>> EarnPointsAsync(EarnPointReqDTO request)
+        => Task.FromResult(Result<EarnPointResDTO>.SystemError("Point system is disabled"));
 
-    public Task<ApiResponse<List<AvailableRewardResDTO>>> GetAvailableRewardsAsync()
-        => Task.FromResult(ApiResponse<List<AvailableRewardResDTO>>.Fail("Point system is disabled"));
+    public Task<Result<List<AvailableRewardResDTO>>> GetAvailableRewardsAsync()
+        => Task.FromResult(Result<List<AvailableRewardResDTO>>.SystemError("Point system is disabled"));
 
-    public Task<ApiResponse<ClaimRewardResDTO>> ClaimRewardAsync(ClaimRewardReqDTO request)
-        => Task.FromResult(ApiResponse<ClaimRewardResDTO>.Fail("Point system is disabled"));
+    public Task<Result<ClaimRewardResDTO>> ClaimRewardAsync(ClaimRewardReqDTO request)
+        => Task.FromResult(Result<ClaimRewardResDTO>.SystemError("Point system is disabled"));
 
-    public Task<ApiResponse<List<PointHistoryResDTO>>> GetPointHistoryAsync(string accountId)
-        => Task.FromResult(ApiResponse<List<PointHistoryResDTO>>.Fail("Point system is disabled"));
+    public Task<Result<List<PointHistoryResDTO>>> GetPointHistoryAsync(string accountId)
+        => Task.FromResult(Result<List<PointHistoryResDTO>>.SystemError("Point system is disabled"));
 
-    public Task<ApiResponse<List<PendingRedemptionResDTO>>> GetPendingRedemptionsAsync()
-        => Task.FromResult(ApiResponse<List<PendingRedemptionResDTO>>.Fail("Point system is disabled"));
+    public Task<Result<List<PendingRedemptionResDTO>>> GetPendingRedemptionsAsync()
+        => Task.FromResult(Result<List<PendingRedemptionResDTO>>.SystemError("Point system is disabled"));
 
-    public Task<ApiResponse<bool>> UpdateRedemptionStatusAsync(string redemptionId, RedemptionStatus status)
-        => Task.FromResult(ApiResponse<bool>.Fail("Point system is disabled"));
+    public Task<Result<bool>> UpdateRedemptionStatusAsync(string redemptionId, RedemptionStatus status)
+        => Task.FromResult(Result<bool>.SystemError("Point system is disabled"));
 }

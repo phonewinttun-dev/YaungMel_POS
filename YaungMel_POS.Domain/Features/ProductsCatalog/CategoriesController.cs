@@ -107,7 +107,7 @@ namespace YaungMel_POS.domain.Features.ProductsCatalog
         public async Task<IActionResult> Search([FromQuery] string term)
         {
             if (string.IsNullOrWhiteSpace(term))
-                return BadRequest(ApiResponse<object>.Fail("Search term cannot be empty."));
+                return BadRequest(Result<object>.SystemError("Search term cannot be empty."));
 
             var result = await _service.GetCategoriesByTermAsync(term);
 

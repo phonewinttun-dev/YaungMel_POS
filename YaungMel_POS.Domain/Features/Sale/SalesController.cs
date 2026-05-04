@@ -53,7 +53,7 @@ namespace YaungMel_POS.domain.Features.Sale
         public async Task<IActionResult> Create([FromBody] CreateSaleDTO createRequest)
         {
             if (!ModelState.IsValid)
-                return BadRequest(ApiResponse<object>.Fail("Invalid sale data."));
+                return BadRequest(Result<object>.SystemError("Invalid sale data."));
 
             var result = await _service.CreateSaleAsync(createRequest, GetCurrentUserId());
 

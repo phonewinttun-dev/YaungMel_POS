@@ -23,7 +23,7 @@ public class PointController : ControllerBase
     [HttpPost("accounts")]
     public async Task<IActionResult> CreateAccount([FromBody] CreateAccountReqDTO request)
     {
-        if (!ModelState.IsValid) return BadRequest(ApiResponse<object>.Fail("Invalid request data."));
+        if (!ModelState.IsValid) return BadRequest(Result<object>.SystemError("Invalid request data."));
 
         var result = await _service.CreateAccountAsync(request);
         return Ok(result);
@@ -78,7 +78,7 @@ public class PointController : ControllerBase
     [HttpPost("earn")]
     public async Task<IActionResult> EarnPoints([FromBody] EarnPointReqDTO request)
     {
-        if (!ModelState.IsValid) return BadRequest(ApiResponse<object>.Fail("Invalid request data."));
+        if (!ModelState.IsValid) return BadRequest(Result<object>.SystemError("Invalid request data."));
 
         var result = await _service.EarnPointsAsync(request);
         return Ok(result);
@@ -94,7 +94,7 @@ public class PointController : ControllerBase
     [HttpPost("redemption/claim")]
     public async Task<IActionResult> ClaimReward([FromBody] ClaimRewardReqDTO request)
     {
-        if (!ModelState.IsValid) return BadRequest(ApiResponse<object>.Fail("Invalid request data."));
+        if (!ModelState.IsValid) return BadRequest(Result<object>.SystemError("Invalid request data."));
 
         var result = await _service.ClaimRewardAsync(request);
         return Ok(result);

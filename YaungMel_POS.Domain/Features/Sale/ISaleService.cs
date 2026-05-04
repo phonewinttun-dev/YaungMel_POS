@@ -11,10 +11,10 @@ namespace YaungMel_POS.domain.Features.Sale
 {
     public interface ISaleService
     {
-        Task<ApiResponse<SaleDTO>> CreateSaleAsync(CreateSaleDTO reqSale, int userId);
-        Task<ApiResponse<SaleListResponseDTO>> GetSalesAsync(int pageNo, int pageSize);
+        Task<Result<SaleDTO>> CreateSaleAsync(CreateSaleDTO reqSale, int userId);
+        Task<Result<SaleListResponseDTO>> GetSalesAsync(int pageNo, int pageSize);
 
-        Task<ApiResponse<SaleDTO>> GetSaleByVoucherCodeAsync(string voucherCode);
+        Task<Result<SaleDTO>> GetSaleByVoucherCodeAsync(string voucherCode);
         bool ValidateSale(CreateSaleDTO sale);
         decimal TotalPrice(CreateSaleDTO reqSale, Dictionary<int, Tbl_Product> products);
         decimal SubPrice(decimal price, int quantity);

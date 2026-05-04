@@ -19,13 +19,13 @@ public class DashboardService : IDashboardService
     }
 
     #region [1] Sales Overview
-    public ApiResponse<SalesOverviewDTO> GetSalesOverview(DateTime startDate, DateTime endDate)
+    public Result<SalesOverviewDTO> GetSalesOverview(DateTime startDate, DateTime endDate)
     {
         try
         {
 
             if (startDate > endDate)
-                return ApiResponse<SalesOverviewDTO>.Fail("Start date must be before end date.");
+                return Result<SalesOverviewDTO>.SystemError("Start date must be before end date.");
 
 
             var sales = _db.Sales
@@ -41,17 +41,17 @@ public class DashboardService : IDashboardService
                 EndDate = endDate
             };
 
-            return ApiResponse<SalesOverviewDTO>.Success(overview);
+            return Result<SalesOverviewDTO>.Success(overview);
         }
         catch (Exception ex)
         {
-            return ApiResponse<SalesOverviewDTO>.Fail($"Error: {ex.Message}");
+            return Result<SalesOverviewDTO>.SystemError($"Error: {ex.Message}");
         }
     }
     #endregion
 
     #region [2] Sales Per Period (day, week, month)
-    public ApiResponse<SalesPerPeriodDTO> GetSalesPerPeriod(string period)
+    public Result<SalesPerPeriodDTO> GetSalesPerPeriod(string period)
     {
         try
         {
@@ -60,7 +60,7 @@ public class DashboardService : IDashboardService
             var normalizedPeriod = period.ToLower().Trim();
 
             if (!validPeriods.Contains(normalizedPeriod))
-                return ApiResponse<SalesPerPeriodDTO>.Fail("Invalid period. Use 'day', 'week', or 'month'.");
+                return Result<SalesPerPeriodDTO>.SystemError("Invalid period. Use 'day', 'week', or 'month'.");
 
             var sales = _db.Sales.OrderBy(s => s.CreatedAt).ToList();
 
@@ -123,18 +123,18 @@ public class DashboardService : IDashboardService
                 Data = groupedData
             };
 
-            return ApiResponse<SalesPerPeriodDTO>.Success(result);
+            return Result<SalesPerPeriodDTO>.Success(result);
         }
         catch (Exception ex)
         {
-            return ApiResponse<SalesPerPeriodDTO>.Fail($"Error: {ex.Message}");
+            return Result<SalesPerPeriodDTO>.SystemError($"Error: {ex.Message}");
         }
     }
     #endregion
 
     #region [3] Sales Report (1month, 3months, 6months, 9months, 1year)
 
-    public ApiResponse<SalesReportDTO> GetSalesReport(string range)
+    public Result<SalesReportDTO> GetSalesReport(string range)
     {
         try
         {
@@ -151,7 +151,7 @@ public class DashboardService : IDashboardService
             var normalizedRange = range.ToLower().Trim();
 
             if (!validRanges.TryGetValue(normalizedRange, out int monthsBack))
-                return ApiResponse<SalesReportDTO>.Fail("Invalid range. Use '1month', '3months', '6months', '9months', or '1year'.");
+                return Result<SalesReportDTO>.SystemError("Invalid range. Use '1month', '3months', '6months', '9months', or '1year'.");
 
             var endDate = DateTime.Now;
             var startDate = endDate.AddMonths(-monthsBack);
@@ -181,23 +181,23 @@ public class DashboardService : IDashboardService
                 MonthlySummary = monthlySummary
             };
 
-            return ApiResponse<SalesReportDTO>.Success(result);
+            return Result<SalesReportDTO>.Success(result);
         }
         catch (Exception ex)
         {
-            return ApiResponse<SalesReportDTO>.Fail($"Error: {ex.Message}");
+            return Result<SalesReportDTO>.SystemError($"Error: {ex.Message}");
         }
     }
     #endregion
 
     #region [4] Top Products
 
-    public ApiResponse<List<TopProductDTO>> GetTopProducts(int top = 10)
+    public Result<List<TopProductDTO>> GetTopProducts(int top = 10)
     {
         try
         {
             if (top <= 0)
-                return ApiResponse<List<TopProductDTO>>.Fail("Top count must be greater than 0.");
+                return Result<List<TopProductDTO>>.SystemError("Top count must be greater than 0.");
 
             var topProducts = _db.SaleItems
                 .Include(si => si.Product)
@@ -213,11 +213,11 @@ public class DashboardService : IDashboardService
                 .Take(top)
                 .ToList();
 
-            return ApiResponse<List<TopProductDTO>>.Success(topProducts);
+            return Result<List<TopProductDTO>>.Success(topProducts);
         }
         catch (Exception ex)
         {
-            return ApiResponse<List<TopProductDTO>>.Fail($"Error: {ex.Message}");
+            return Result<List<TopProductDTO>>.SystemError($"Error: {ex.Message}");
         }
     }
     #endregion

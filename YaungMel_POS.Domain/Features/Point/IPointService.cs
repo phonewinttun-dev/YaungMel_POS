@@ -6,15 +6,15 @@ namespace YaungMel_POS.domain.Features.Point
 {
     public interface IPointService
     {
-        Task<ApiResponse<ClaimRewardResDTO>> ClaimRewardAsync(ClaimRewardReqDTO request);
-        Task<ApiResponse<CreateAccountResDTO>> CreateAccountAsync(CreateAccountReqDTO request);
-        Task<ApiResponse<AccountLookupResponse>> LookupAccountAsync(string userId);
-        Task<ApiResponse<EarnPointResDTO>> EarnPointsAsync(EarnPointReqDTO request);
-        Task<ApiResponse<AccountListResponseWrapper>> GetAccountsAsync(AccountListReqDTO request);
-        Task<ApiResponse<List<AvailableRewardResDTO>>> GetAvailableRewardsAsync();
-        Task<ApiResponse<List<PendingRedemptionResDTO>>> GetPendingRedemptionsAsync();
-        Task<ApiResponse<List<PointHistoryResDTO>>> GetPointHistoryAsync(string accountId);
-        Task<ApiResponse<CheckBalanceResDTO>> GetUserBalanceAsync(CheckBalanceReqDTO request);
-        Task<ApiResponse<bool>> UpdateRedemptionStatusAsync(string redemptionId, RedemptionStatus status);
+        Task<Result<ClaimRewardResDTO>> ClaimRewardAsync(ClaimRewardReqDTO request);
+        Task<Result<CreateAccountResDTO>> CreateAccountAsync(CreateAccountReqDTO request);
+        Task<Result<AccountLookupResponse>> LookupAccountAsync(string userId);
+        Task<Result<EarnPointResDTO>> EarnPointsAsync(EarnPointReqDTO request);
+        Task<Result<AccountListResponseWrapper>> GetAccountsAsync(AccountListReqDTO request);
+        Task<Result<List<AvailableRewardResDTO>>> GetAvailableRewardsAsync();
+        Task<Result<List<PendingRedemptionResDTO>>> GetPendingRedemptionsAsync();
+        Task<Result<List<PointHistoryResDTO>>> GetPointHistoryAsync(string accountId);
+        Task<Result<CheckBalanceResDTO>> GetUserBalanceAsync(CheckBalanceReqDTO request);
+        Task<Result<bool>> UpdateRedemptionStatusAsync(string redemptionId, RedemptionStatus status);
     }
 }
