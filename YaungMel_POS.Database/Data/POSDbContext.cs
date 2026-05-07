@@ -14,6 +14,7 @@ public class POSDbContext: DbContext
     public DbSet<Tbl_Category> Categories { get; set; }
     public DbSet<Tbl_Sale> Sales { get; set; }
     public DbSet<Tbl_SaleItem> SaleItems { get; set; }
+    public DbSet<Tbl_Summary> Summaries { get; set; }
     public DbSet<Tbl_User> Users { get; set; }
     public DbSet<Tbl_User_Token> UserToken { get; set; }
 
@@ -24,6 +25,7 @@ public class POSDbContext: DbContext
         modelBuilder.Entity<Tbl_Category>().ToTable("Tbl_Category");
         modelBuilder.Entity<Tbl_Sale>().ToTable("Tbl_Sale");
         modelBuilder.Entity<Tbl_SaleItem>().ToTable("Tbl_SaleItem");
+        modelBuilder.Entity<Tbl_Summary>().ToTable("Tbl_Summary");
         modelBuilder.Entity<Tbl_User_Token>().ToTable("Tbl_User_Token");
         modelBuilder.Entity<Tbl_User>().ToTable("Tbl_User");
 
@@ -88,6 +90,12 @@ public class POSDbContext: DbContext
         modelBuilder.Entity<Tbl_User>()
             .Property(u => u.Role)
             .HasConversion<string>();
+
+        //map Tbl_Summarry to Tbl_Product
+        modelBuilder.Entity<Tbl_Summary>()
+            .HasOne(s => s.TopSaleProduct)
+            .WithMany()
+            .HasForeignKey(s => s.TopSaleProductId);
 
         base.OnModelCreating(modelBuilder);
     }

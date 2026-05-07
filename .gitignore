@@ -372,5 +372,3 @@ Migrations/
 /module_checklist.md
 *.postman_collection
 /migration.md
-
-/YaungMel_POS.WebApi/DatabaseSeeder.cs

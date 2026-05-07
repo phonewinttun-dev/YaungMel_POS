@@ -5,8 +5,10 @@ using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 using Serilog;
 using System.Text;
+using YaungMel_POS.Database.Data;
 using YaungMel_POS.Domain.Features;
 using YaungMel_POS.Domain.Middlewares;
+using YaungMel_POS.WebApi;
 
 
 try
@@ -94,6 +96,15 @@ try
     });
 
     var app = builder.Build();
+
+    //using (var scope = app.Services.CreateScope())
+    //{
+    //    var db = scope.ServiceProvider.GetRequiredService<POSDbContext>();
+
+    //    await db.Database.MigrateAsync();
+
+    //    await DatabaseSeeder.SeedAsync(app.Services);
+    //}
 
     // Configure the HTTP request pipeline.
     if (app.Environment.IsDevelopment())
