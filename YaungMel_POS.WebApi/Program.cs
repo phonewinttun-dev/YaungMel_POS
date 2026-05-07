@@ -1,3 +1,5 @@
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -94,6 +96,10 @@ try
                    .AllowAnyHeader();
         });
     });
+
+
+
+    builder.Services.AddHangfireServer();
 
     var app = builder.Build();
 

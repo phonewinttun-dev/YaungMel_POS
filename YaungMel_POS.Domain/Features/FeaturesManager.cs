@@ -11,6 +11,7 @@ using YaungMel_POS.Domain.Features.Point;
 using YaungMel_POS.Domain.Features.Sale;
 using YaungMel_POS.Domain.Features.Search;
 using YaungMel_POS.Domain.Features.ProductsCatalog;
+using YaungMel_POS.Domain.Features.Summary;
 
 namespace YaungMel_POS.Domain.Features
 {
@@ -57,6 +58,7 @@ namespace YaungMel_POS.Domain.Features
             builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<ISummaryService, SummaryService>();  
         }
     }
 }
