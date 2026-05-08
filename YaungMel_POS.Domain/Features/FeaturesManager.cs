@@ -1,4 +1,6 @@
 using CloudinaryDotNet;
+using DinkToPdf;
+using DinkToPdf.Contracts;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -8,9 +10,10 @@ using YaungMel_POS.Domain.Features.Auth;
 using YaungMel_POS.Domain.Features.Dashboard;
 using YaungMel_POS.Domain.Features.Inventory;
 using YaungMel_POS.Domain.Features.Point;
+using YaungMel_POS.Domain.Features.ProductsCatalog;
+using YaungMel_POS.Domain.Features.Report;
 using YaungMel_POS.Domain.Features.Sale;
 using YaungMel_POS.Domain.Features.Search;
-using YaungMel_POS.Domain.Features.ProductsCatalog;
 using YaungMel_POS.Domain.Features.Summary;
 
 namespace YaungMel_POS.Domain.Features
@@ -23,6 +26,9 @@ namespace YaungMel_POS.Domain.Features
             builder.Services.AddDbContext<POSDbContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("POSConnectionString")));
             var loyaltySettings = builder.Configuration.GetSection("LoyaltyApiSettings");
+
+            // DinkToPDF 
+            builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 
             //cloudinary config
             var cloudName = builder.Configuration["Cloudinary:CloudName"]?.Trim();
@@ -59,6 +65,7 @@ namespace YaungMel_POS.Domain.Features
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<ISummaryService, SummaryService>();  
+            builder.Services.AddScoped<IReportService, ReportService>();
         }
     }
 }

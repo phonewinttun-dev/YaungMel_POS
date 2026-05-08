@@ -22,6 +22,8 @@
 		<PackageReference Include="CloudinaryDotNet" Version="1.29.0" />
 		<PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.5.0" />
 		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.0.0" />
+		<PackageReference Include="DinkToPdf" Version="1.0.8" />
+
 	</ItemGroup>
 
 </Project>
