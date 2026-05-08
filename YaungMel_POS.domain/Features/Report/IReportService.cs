@@ -8,7 +8,6 @@ namespace YaungMel_POS.Domain.Features.Report
 {
     public interface IReportService
     {
-        Task<byte[]> GenerateAnalyticsReportPdfAsync(DateTime start, DateTime end);
         Task<byte[]> GenerateDetailedDailyPdfAsync(DateTime date);
     }
 }

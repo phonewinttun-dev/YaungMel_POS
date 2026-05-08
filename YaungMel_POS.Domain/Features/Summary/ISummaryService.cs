@@ -8,6 +8,5 @@ namespace YaungMel_POS.Domain.Features.Summary
         Task<Result<SummaryDTO>> CreateSummaryAsync();
         Task<Result<SummaryDetailDto>> GetSummaryByDateAsync(DateTime date);
         Task<Result<SummaryListResponseModel>> GetSummaryByPagination(int pageNo = 1, int pageSize = 10);
-        Task<Result<List<SummaryDTO>>> GetSummariesByRangeAsync(DateTime start, DateTime end);
     }
 }

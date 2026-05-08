@@ -174,34 +174,6 @@ public class SummaryService : ISummaryService
 
 
     #endregion
-
-    #region Get Summaries By Range
-    public async Task<Result<List<SummaryDTO>>> GetSummariesByRangeAsync(DateTime start, DateTime end)
-    {
-        try
-        {
-            var summaries = await _db.Summaries
-                .AsNoTracking()
-                .Include(s => s.TopSaleProduct)
-                .Where(s => s.Date.Date >= start.Date && s.Date.Date <= end.Date)
-                .OrderBy(s => s.Date)
-                .Select(s => new SummaryDTO
-                {
-                    Date = s.Date,
-                    TotalSale = s.TotalSale,
-                    TotalAmount = s.TotalAmount,
-                    TopSaleProductName = s.TopSaleProduct.Name
-                })
-                .ToListAsync();
-
-            return Result<List<SummaryDTO>>.Success(summaries);
-        }
-        catch (Exception ex)
-        {
-            return Result<List<SummaryDTO>>.SystemError(ex.Message);
-        }
-    }
-    #endregion
 }
 
 
