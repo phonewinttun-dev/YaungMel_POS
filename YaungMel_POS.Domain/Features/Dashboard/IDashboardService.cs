@@ -7,8 +7,8 @@ namespace YaungMel_POS.Domain.Features.Dashboard;
 
 public interface IDashboardService
 {
-    Result<SalesOverviewDTO> GetSalesOverview(DateTime startDate, DateTime endDate);
-    Result<SalesPerPeriodDTO> GetSalesPerPeriod(string period);
-    Result<SalesReportDTO> GetSalesReport(string range);
-    Result<List<TopProductDTO>> GetTopProducts(int top = 10);
+    Task<Result<SalesOverviewDTO>> GetSalesOverviewAsync(DateTime startDate, DateTime endDate);
+    Task<Result<SalesPerPeriodDTO>> GetSalesPerPeriodAsync(string period);
+    Task<Result<SalesReportDTO>> GetSalesReportAsync(string range);
+    Task<Result<List<TopProductDTO>>> GetTopProductsAsync(int top = 10);
 }

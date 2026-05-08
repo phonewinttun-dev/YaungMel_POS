@@ -127,7 +127,7 @@ try
         app.MapScalarApiReference();
     }
 
-   
+
     app.UseHttpsRedirection();
     app.UseCors("AllowAll");
     app.UseAuthentication();

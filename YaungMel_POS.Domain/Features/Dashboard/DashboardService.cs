@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Threading.Tasks;
 using YaungMel_POS.Database.Data;
 using YaungMel_POS.Domain.DTOs;
 using YaungMel_POS.Shared.Responses;
@@ -19,27 +20,30 @@ public class DashboardService : IDashboardService
     }
 
     #region [1] Sales Overview
-    public Result<SalesOverviewDTO> GetSalesOverview(DateTime startDate, DateTime endDate)
+    public async Task<Result<SalesOverviewDTO>> GetSalesOverviewAsync(DateTime startDate, DateTime endDate)
     {
         try
         {
-
             if (startDate > endDate)
                 return Result<SalesOverviewDTO>.SystemError("Start date must be before end date.");
 
-
-            var sales = _db.Sales
+            var overview = await _db.Sales
                 .Where(s => s.CreatedAt >= startDate && s.CreatedAt <= endDate)
-                .ToList();
-
-    
-            var overview = new SalesOverviewDTO
-            {
-                TotalRevenue = sales.Sum(s => s.TotalPrice),
-                TotalSales = sales.Count,
-                StartDate = startDate,
-                EndDate = endDate
-            };
+                .GroupBy(s => 1)
+                .Select(g => new SalesOverviewDTO
+                {
+                    TotalRevenue = g.Sum(s => s.TotalPrice),
+                    TotalSales = g.Count(),
+                    StartDate = startDate,
+                    EndDate = endDate
+                })
+                .FirstOrDefaultAsync() ?? new SalesOverviewDTO
+                {
+                    TotalRevenue = 0,
+                    TotalSales = 0,
+                    StartDate = startDate,
+                    EndDate = endDate
+                };
 
             return Result<SalesOverviewDTO>.Success(overview);
         }
@@ -51,25 +55,22 @@ public class DashboardService : IDashboardService
     #endregion
 
     #region [2] Sales Per Period (day, week, month)
-    public Result<SalesPerPeriodDTO> GetSalesPerPeriod(string period)
+    public async Task<Result<SalesPerPeriodDTO>> GetSalesPerPeriodAsync(string period)
     {
         try
         {
-
             var validPeriods = new[] { "day", "week", "month" };
             var normalizedPeriod = period.ToLower().Trim();
 
             if (!validPeriods.Contains(normalizedPeriod))
                 return Result<SalesPerPeriodDTO>.SystemError("Invalid period. Use 'day', 'week', or 'month'.");
 
-            var sales = _db.Sales.OrderBy(s => s.CreatedAt).ToList();
-
             List<SalesPeriodGroupDTO> groupedData;
 
             switch (normalizedPeriod)
             {
                 case "day":
-                    groupedData = sales
+                    groupedData = await _db.Sales
                         .GroupBy(s => s.CreatedAt.Date)
                         .Select(g => new SalesPeriodGroupDTO
                         {
@@ -78,11 +79,18 @@ public class DashboardService : IDashboardService
                             TotalSales = g.Count()
                         })
                         .OrderBy(g => g.Label)
-                        .ToList();
+                        .ToListAsync();
                     break;
 
                 case "week":
-                    groupedData = sales
+                    // Grouping by week in SQL is complex due to different calendar rules.
+                    // For now, we filter and group in-memory but we could optimize later if needed.
+                    // To avoid OOM, we only fetch the necessary data.
+                    var salesData = await _db.Sales
+                        .Select(s => new { s.CreatedAt, s.TotalPrice })
+                        .ToListAsync();
+
+                    groupedData = salesData
                         .GroupBy(s => new
                         {
                             s.CreatedAt.Year,
@@ -100,16 +108,26 @@ public class DashboardService : IDashboardService
                     break;
 
                 case "month":
-                    groupedData = sales
+                    groupedData = await _db.Sales
                         .GroupBy(s => new { s.CreatedAt.Year, s.CreatedAt.Month })
                         .Select(g => new SalesPeriodGroupDTO
                         {
-                            Label = $"{CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(g.Key.Month)} {g.Key.Year}",
+                            // We construct the label in-memory after fetching grouped data to use MonthName
+                            Label = g.Key.Year + "-" + g.Key.Month.ToString("D2"), 
                             TotalRevenue = g.Sum(s => s.TotalPrice),
                             TotalSales = g.Count()
                         })
                         .OrderBy(g => g.Label)
-                        .ToList();
+                        .ToListAsync();
+
+                    // Refine labels to use month names
+                    foreach (var item in groupedData)
+                    {
+                        var parts = item.Label.Split('-');
+                        var year = int.Parse(parts[0]);
+                        var month = int.Parse(parts[1]);
+                        item.Label = $"{CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month)} {year}";
+                    }
                     break;
 
                 default:
@@ -133,12 +151,10 @@ public class DashboardService : IDashboardService
     #endregion
 
     #region [3] Sales Report (1month, 3months, 6months, 9months, 1year)
-
-    public Result<SalesReportDTO> GetSalesReport(string range)
+    public async Task<Result<SalesReportDTO>> GetSalesReportAsync(string range)
     {
         try
         {
-   
             var validRanges = new Dictionary<string, int>
             {
                 { "1month", 1 },
@@ -153,32 +169,43 @@ public class DashboardService : IDashboardService
             if (!validRanges.TryGetValue(normalizedRange, out int monthsBack))
                 return Result<SalesReportDTO>.SystemError("Invalid range. Use '1month', '3months', '6months', '9months', or '1year'.");
 
-            var endDate = DateTime.Now;
+            var endDate = DateTime.UtcNow;
             var startDate = endDate.AddMonths(-monthsBack);
 
-   
-            var sales = _db.Sales
+            var salesSummary = await _db.Sales
                 .Where(s => s.CreatedAt >= startDate && s.CreatedAt <= endDate)
-                .ToList();
-
-    
-            var monthlySummary = sales
-                .GroupBy(s => new { s.CreatedAt.Year, s.CreatedAt.Month })
-                .Select(g => new SalesReportGroupDTO
+                .GroupBy(s => 1)
+                .Select(g => new
                 {
-                    Month = $"{CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(g.Key.Month)} {g.Key.Year}",
+                    TotalRevenue = g.Sum(s => s.TotalPrice),
+                    TotalSales = g.Count()
+                })
+                .FirstOrDefaultAsync();
+
+            var monthlySummary = await _db.Sales
+                .Where(s => s.CreatedAt >= startDate && s.CreatedAt <= endDate)
+                .GroupBy(s => new { s.CreatedAt.Year, s.CreatedAt.Month })
+                .Select(g => new 
+                {
+                    Year = g.Key.Year,
+                    Month = g.Key.Month,
                     Revenue = g.Sum(s => s.TotalPrice),
                     Sales = g.Count()
                 })
-                .OrderBy(g => g.Month)
-                .ToList();
+                .OrderBy(g => g.Year).ThenBy(g => g.Month)
+                .ToListAsync();
 
             var result = new SalesReportDTO
             {
                 ReportRange = normalizedRange,
-                TotalRevenue = sales.Sum(s => s.TotalPrice),
-                TotalSales = sales.Count,
-                MonthlySummary = monthlySummary
+                TotalRevenue = salesSummary?.TotalRevenue ?? 0,
+                TotalSales = salesSummary?.TotalSales ?? 0,
+                MonthlySummary = monthlySummary.Select(m => new SalesReportGroupDTO
+                {
+                    Month = $"{CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(m.Month)} {m.Year}",
+                    Revenue = m.Revenue,
+                    Sales = m.Sales
+                }).ToList()
             };
 
             return Result<SalesReportDTO>.Success(result);
@@ -191,16 +218,14 @@ public class DashboardService : IDashboardService
     #endregion
 
     #region [4] Top Products
-
-    public Result<List<TopProductDTO>> GetTopProducts(int top = 10)
+    public async Task<Result<List<TopProductDTO>>> GetTopProductsAsync(int top = 10)
     {
         try
         {
             if (top <= 0)
                 return Result<List<TopProductDTO>>.SystemError("Top count must be greater than 0.");
 
-            var topProducts = _db.SaleItems
-                .Include(si => si.Product)
+            var topProducts = await _db.SaleItems
                 .GroupBy(si => new { si.ProductId, si.Product.Name })
                 .Select(g => new TopProductDTO
                 {
@@ -211,7 +236,7 @@ public class DashboardService : IDashboardService
                 })
                 .OrderByDescending(p => p.TotalQuantitySold)
                 .Take(top)
-                .ToList();
+                .ToListAsync();
 
             return Result<List<TopProductDTO>>.Success(topProducts);
         }

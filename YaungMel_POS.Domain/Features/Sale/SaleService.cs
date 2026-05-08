@@ -23,26 +23,30 @@ public class SaleService : ISaleService
         if (!ValidateSale(reqSale))
             return Result<SaleDTO>.SystemError("Invalid sale data.");
 
-        var productIds = reqSale.Items.Select(x => x.ProductId).Distinct().ToList();
-        var products = await ActiveProduct
-                               .Where(p => productIds.Contains(p.Id))
-                               .ToDictionaryAsync(p => p.Id);
-
-        // check product exists & sufficient quantity
-        foreach (var item in reqSale.Items)
-        {
-            if (!products.TryGetValue(item.ProductId, out var product))
-                return Result<SaleDTO>.SystemError($"Product with ID: {item.ProductId} not found.");
-
-            if (product.StockQuantity < item.Quantity)
-                return Result<SaleDTO>.SystemError($"Insufficient stock for {product.Name}.");
-        }
+        if (reqSale.Items == null || !reqSale.Items.Any())
+            return Result<SaleDTO>.SystemError("Sale must contain at least one item.");
 
         using var transaction = await _db.Database.BeginTransactionAsync();
         try
         {
-            
+            var productIds = reqSale.Items.Select(x => x.ProductId).Distinct().ToList();
+
+            var products = await _db.Products
+                                   .Where(p => productIds.Contains(p.Id) && !p.DeleteFlag)
+                                   .ToDictionaryAsync(p => p.Id);
+
+            // check product exists & sufficient quantity
+            foreach (var item in reqSale.Items)
+            {
+                if (!products.TryGetValue(item.ProductId, out var product))
+                    return Result<SaleDTO>.SystemError($"Product with ID: {item.ProductId} not found.");
+
+                if (product.StockQuantity < item.Quantity)
+                    return Result<SaleDTO>.SystemError($"Insufficient stock for {product.Name}. Available: {product.StockQuantity}");
+            }
+
             decimal totalPrice = TotalPrice(reqSale, products);
+
             var saveModel = new Tbl_Sale
             {
                 TotalPrice = totalPrice,
@@ -57,6 +61,7 @@ public class SaleService : ISaleService
 
                 // Stock deduction
                 product.StockQuantity -= item.Quantity;
+                product.UpdatedAt = DateTime.UtcNow;
 
                 return new Tbl_SaleItem
                 {
@@ -96,12 +101,13 @@ public class SaleService : ISaleService
     }
     #endregion
 
-    #region Get All Sale Paignation 
+    #region Get All Sale Paignation
     public async Task<Result<SaleListResponseDTO>> GetSalesAsync(int pageNo, int pageSize)
     {
         try
         {
-            // double time hitting to database 
+            if (pageSize <= 0) return Result<SaleListResponseDTO>.SystemError("Page size must be greater than 0.");
+
             var totalItems = await _db.Sales.CountAsync();
 
             var pageCount = totalItems / pageSize;
@@ -110,8 +116,8 @@ public class SaleService : ISaleService
             var sales = await _db.Sales
                 .AsNoTracking()
                 .OrderByDescending(s => s.Id)
-                .Skip((pageNo - 1) * pageSize) 
-                .Take(pageSize)              
+                .Skip((pageNo - 1) * pageSize)
+                .Take(pageSize)
                 .Select(sale => new SaleDTO
                 {
                     Id = sale.Id,
@@ -144,19 +150,18 @@ public class SaleService : ISaleService
     #endregion
 
     #region Get Sale By Voucher code
-    public async Task<Result<SaleDTO>> GetSaleByVoucherCodeAsync(string  voucherCode)
+    public async Task<Result<SaleDTO>> GetSaleByVoucherCodeAsync(string voucherCode)
     {
         try
         {
             var sale = await _db.Sales
-           .Include(s => s.SaleItems)
-           .AsNoTracking()
-           .FirstOrDefaultAsync(s => s.VoucherCode == voucherCode);
+               .Include(s => s.SaleItems)
+               .ThenInclude(si => si.Product) // Fix: Include product to get names efficiently
+               .AsNoTracking()
+               .FirstOrDefaultAsync(s => s.VoucherCode == voucherCode);
 
             if (sale is null)
                 return Result<SaleDTO>.NotFound("Sale not found.");
-
-            var product = await ActiveProduct.ToDictionaryAsync(p => p.Id, p => p.Name);
 
             var resModel = new SaleDTO
             {
@@ -166,7 +171,7 @@ public class SaleService : ISaleService
                 VoucherCode = sale.VoucherCode,
                 SaleItems = sale.SaleItems.Select(x => new SaleItemDTO
                 {
-                    ProductName = product.TryGetValue(x.ProductId, out var name) ? name : "Unknown Product",
+                    ProductName = x.Product?.Name ?? "Unknown Product",
                     Quantity = x.Quantity,
                     Price = x.Price,
                     PriceFormatted = x.Price.ToString("N0")
@@ -176,7 +181,7 @@ public class SaleService : ISaleService
         }
         catch (Exception ex)
         {
-            return Result<SaleDTO>.SystemError(ex.Message); 
+            return Result<SaleDTO>.SystemError(ex.Message);
         }
     }
     #endregion
@@ -186,6 +191,10 @@ public class SaleService : ISaleService
     {
         if (sale == null)
             return false;
+
+        if (sale.Items == null || !sale.Items.Any())
+            return false;
+
         foreach (var item in sale.Items)
         {
             if (item == null)
@@ -219,6 +228,4 @@ public class SaleService : ISaleService
         return price * quantity;
     }
     #endregion
-
 }
-

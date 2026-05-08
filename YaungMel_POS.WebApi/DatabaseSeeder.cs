@@ -14,8 +14,8 @@ public static class DatabaseSeeder
         var random = new Random();
 
         // ───────────────── USERS ─────────────────
-        if (!await db.Users.AnyAsync())
-        {
+        //if (!await db.Users.AnyAsync())
+        //{
             var users = new List<Tbl_User>
             {
                 new()
@@ -49,10 +49,10 @@ public static class DatabaseSeeder
 
             await db.Users.AddRangeAsync(users);
             await db.SaveChangesAsync();
-        }
+        //}
 
-        var adminUser = await db.Users.FirstAsync(u => u.Role == Tbl_User.UserRole.Admin);
-        var staffUser = await db.Users.FirstAsync(u => u.Role == Tbl_User.UserRole.Staff);
+        var adminUser = await db.Users.FirstOrDefaultAsync(u => u.Role == Tbl_User.UserRole.Admin);
+        var staffUser = await db.Users.FirstOrDefaultAsync(u => u.Role == Tbl_User.UserRole.Staff);
 
         // ───────────────── CATEGORIES ─────────────────
         if (!await db.Categories.AnyAsync())
@@ -196,7 +196,7 @@ public static class DatabaseSeeder
                     var sale = new Tbl_Sale
                     {
                         VoucherCode = $"VC-{createdDate:yyyyMMdd}-{s + 1:D3}",
-                        CreatedBy = staffUser.Id,
+                        //CreatedBy = staffUser.Id,
                         CreatedAt = createdDate,
                         TotalPrice = 0
                     };

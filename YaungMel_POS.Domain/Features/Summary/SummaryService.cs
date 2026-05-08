@@ -54,15 +54,30 @@ public class SummaryService : ISummaryService
                         .OrderByDescending(x => x.TotalQuantity)
                         .FirstOrDefaultAsync();
 
-            var summary = new Tbl_Summary
-            {
-                Date = today,
-                TotalSale = totalSale,
-                TotalAmount = totalAmount,
-                TopSaleProductId = topProduct?.ProductId
-            };
+            // Check if summary for today already exists
+            var existingSummary = await _db.Summaries
+                                          .FirstOrDefaultAsync(s => s.Date == today);
 
-            await _db.Summaries.AddAsync(summary);
+            if (existingSummary != null)
+            {
+                existingSummary.TotalSale = totalSale;
+                existingSummary.TotalAmount = totalAmount;
+                existingSummary.TopSaleProductId = topProduct?.ProductId;
+
+                _db.Summaries.Update(existingSummary);
+            }
+            else
+            {
+                var summary = new Tbl_Summary
+                {
+                    Date = today,
+                    TotalSale = totalSale,
+                    TotalAmount = totalAmount,
+                    TopSaleProductId = topProduct?.ProductId
+                };
+                await _db.Summaries.AddAsync(summary);
+            }
+
             await _db.SaveChangesAsync();
 
             var resModel = new SummaryDTO
@@ -87,6 +102,8 @@ public class SummaryService : ISummaryService
     {
         try
         {
+            if (pageSize <= 0) return Result<SummaryListResponseModel>.SystemError("Page size must be greater than 0.");
+
             var totalItems = await _db.Summaries.CountAsync();
             int pageCount = totalItems / pageSize;
             if (totalItems % pageSize > 0) pageCount++;
@@ -130,7 +147,7 @@ public class SummaryService : ISummaryService
 
             var summary = await _db.Summaries
                 .Include(s => s.TopSaleProduct)
-                .FirstOrDefaultAsync(s => s.Date.Date == targetDate);
+                .FirstOrDefaultAsync(s => s.Date == targetDate);
 
             if (summary is null) return Result<SummaryDetailDto>.NotFound("Summary not found for the specified date.");
 
@@ -171,9 +188,5 @@ public class SummaryService : ISummaryService
             return Result<SummaryDetailDto>.SystemError(ex.Message);
         }
     }
-
-
     #endregion
 }
-
-

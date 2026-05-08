@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using YaungMel_POS.Shared.Responses;
 using System;
+using System.Threading.Tasks;
 
 namespace YaungMel_POS.Domain.Features.Dashboard;
 
@@ -18,37 +19,37 @@ public class DashboardController : ControllerBase
     }
 
     [HttpGet("overview")]
-    public IActionResult GetSalesOverview([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
+    public async Task<IActionResult> GetSalesOverview([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
     {
         if (!ModelState.IsValid) return BadRequest(ModelState);
-        var result = _service.GetSalesOverview(startDate, endDate);
+        var result = await _service.GetSalesOverviewAsync(startDate, endDate);
         if (!result.IsSuccess)
             return BadRequest(result);
         return Ok(result);
     }
 
     [HttpGet("sales-per-period")]
-    public IActionResult GetSalesPerPeriod([FromQuery] string period = "day")
+    public async Task<IActionResult> GetSalesPerPeriod([FromQuery] string period = "day")
     {
-        var result = _service.GetSalesPerPeriod(period);
+        var result = await _service.GetSalesPerPeriodAsync(period);
         if (!result.IsSuccess)
             return BadRequest(result);
         return Ok(result);
     }
 
     [HttpGet("report")]
-    public IActionResult GetSalesReport([FromQuery] string range = "1month")
+    public async Task<IActionResult> GetSalesReport([FromQuery] string range = "1month")
     {
-        var result = _service.GetSalesReport(range);
+        var result = await _service.GetSalesReportAsync(range);
         if (!result.IsSuccess)
             return BadRequest(result);
         return Ok(result);
     }
 
     [HttpGet("top-products")]
-    public IActionResult GetTopProducts([FromQuery] int top = 10)
+    public async Task<IActionResult> GetTopProducts([FromQuery] int top = 10)
     {
-        var result = _service.GetTopProducts(top);
+        var result = await _service.GetTopProductsAsync(top);
         if (!result.IsSuccess)
             return BadRequest(result);
         return Ok(result);

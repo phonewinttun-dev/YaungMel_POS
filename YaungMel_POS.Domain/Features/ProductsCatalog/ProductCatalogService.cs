@@ -33,6 +33,7 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
         {
             try
             {
+                if (pageSize <= 0) return Result<ProductListResponseDTO>.SystemError("Page size must be greater than 0.");
                 var totalItems = await ActiveProductQuery
                     .AsNoTracking()
                     .CountAsync();
@@ -474,6 +475,7 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
         {
             try
             {
+                if (pageSize <= 0) return Result<CategoryListResponseModel>.SystemError("Page size must be greater than 0.");
                 var totalItems = await _db.Categories
                     .AsNoTracking()
                     .CountAsync();
