@@ -67,72 +67,70 @@ public class DashboardService : IDashboardService
 
             List<SalesPeriodGroupDTO> groupedData;
 
-            switch (normalizedPeriod)
+            if (normalizedPeriod == "day")
             {
-                case "day":
-                    groupedData = await _db.Sales
-                        .GroupBy(s => s.CreatedAt.Date)
-                        .Select(g => new SalesPeriodGroupDTO
-                        {
-                            Label = g.Key.ToString("yyyy-MM-dd"),
-                            TotalRevenue = g.Sum(s => s.TotalPrice),
-                            TotalSales = g.Count()
-                        })
-                        .OrderBy(g => g.Label)
-                        .ToListAsync();
-                    break;
-
-                case "week":
-                    // Grouping by week in SQL is complex due to different calendar rules.
-                    // For now, we filter and group in-memory but we could optimize later if needed.
-                    // To avoid OOM, we only fetch the necessary data.
-                    var salesData = await _db.Sales
-                        .Select(s => new { s.CreatedAt, s.TotalPrice })
-                        .ToListAsync();
-
-                    groupedData = salesData
-                        .GroupBy(s => new
-                        {
-                            s.CreatedAt.Year,
-                            Week = CultureInfo.CurrentCulture.Calendar
-                                .GetWeekOfYear(s.CreatedAt, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday)
-                        })
-                        .Select(g => new SalesPeriodGroupDTO
-                        {
-                            Label = $"{g.Key.Year} - Week {g.Key.Week}",
-                            TotalRevenue = g.Sum(s => s.TotalPrice),
-                            TotalSales = g.Count()
-                        })
-                        .OrderBy(g => g.Label)
-                        .ToList();
-                    break;
-
-                case "month":
-                    groupedData = await _db.Sales
-                        .GroupBy(s => new { s.CreatedAt.Year, s.CreatedAt.Month })
-                        .Select(g => new SalesPeriodGroupDTO
-                        {
-                            // We construct the label in-memory after fetching grouped data to use MonthName
-                            Label = g.Key.Year + "-" + g.Key.Month.ToString("D2"), 
-                            TotalRevenue = g.Sum(s => s.TotalPrice),
-                            TotalSales = g.Count()
-                        })
-                        .OrderBy(g => g.Label)
-                        .ToListAsync();
-
-                    // Refine labels to use month names
-                    foreach (var item in groupedData)
+                groupedData = await _db.Sales
+                    .GroupBy(s => s.CreatedAt.Date)
+                    .Select(g => new SalesPeriodGroupDTO
                     {
-                        var parts = item.Label.Split('-');
-                        var year = int.Parse(parts[0]);
-                        var month = int.Parse(parts[1]);
-                        item.Label = $"{CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month)} {year}";
-                    }
-                    break;
+                        Label = g.Key.ToString("yyyy-MM-dd"),
+                        TotalRevenue = g.Sum(s => s.TotalPrice),
+                        TotalSales = g.Count()
+                    })
+                    .OrderBy(g => g.Label)
+                    .ToListAsync();
+            }
+            else if (normalizedPeriod == "week")
+            {
+                // Grouping by week in SQL is complex due to different calendar rules.
+                // For now, we filter and group in-memory but we could optimize later if needed.
+                // To avoid OOM, we only fetch the necessary data.
+                var salesData = await _db.Sales
+                    .Select(s => new { s.CreatedAt, s.TotalPrice })
+                    .ToListAsync();
 
-                default:
-                    groupedData = new List<SalesPeriodGroupDTO>();
-                    break;
+                groupedData = salesData
+                    .GroupBy(s => new
+                    {
+                        s.CreatedAt.Year,
+                        Week = CultureInfo.CurrentCulture.Calendar
+                            .GetWeekOfYear(s.CreatedAt, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday)
+                    })
+                    .Select(g => new SalesPeriodGroupDTO
+                    {
+                        Label = $"{g.Key.Year} - Week {g.Key.Week}",
+                        TotalRevenue = g.Sum(s => s.TotalPrice),
+                        TotalSales = g.Count()
+                    })
+                    .OrderBy(g => g.Label)
+                    .ToList();
+            }
+            else if (normalizedPeriod == "month")
+            {
+                groupedData = await _db.Sales
+                    .GroupBy(s => new { s.CreatedAt.Year, s.CreatedAt.Month })
+                    .Select(g => new SalesPeriodGroupDTO
+                    {
+                        // We construct the label in-memory after fetching grouped data to use MonthName
+                        Label = g.Key.Year + "-" + g.Key.Month.ToString("D2"),
+                        TotalRevenue = g.Sum(s => s.TotalPrice),
+                        TotalSales = g.Count()
+                    })
+                    .OrderBy(g => g.Label)
+                    .ToListAsync();
+
+                // Refine labels to use month names
+                foreach (var item in groupedData)
+                {
+                    var parts = item.Label.Split('-');
+                    var year = int.Parse(parts[0]);
+                    var month = int.Parse(parts[1]);
+                    item.Label = $"{CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month)} {year}";
+                }
+            }
+            else
+            {
+                groupedData = new List<SalesPeriodGroupDTO>();
             }
 
             var result = new SalesPerPeriodDTO
