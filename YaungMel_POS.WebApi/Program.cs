@@ -93,9 +93,10 @@ try
     {
         options.AddPolicy("AllowAll", builder =>
         {
-            builder.AllowAnyOrigin()
+            builder.SetIsOriginAllowed(origin => true)
                    .AllowAnyMethod()
-                   .AllowAnyHeader();
+                   .AllowAnyHeader()
+                   .AllowCredentials();
         });
     });
 
@@ -132,8 +133,8 @@ try
     }
 
 
-    app.UseHttpsRedirection();
     app.UseCors("AllowAll");
+    app.UseHttpsRedirection();
     app.UseAuthentication();
     app.UseMiddleware<Middleware>();
     app.UseAuthorization();
