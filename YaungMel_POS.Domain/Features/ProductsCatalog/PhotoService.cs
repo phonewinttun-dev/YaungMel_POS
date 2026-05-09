@@ -34,18 +34,20 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                 }
 
                 long maxFileSize = 5 * 1024 * 1024; // 5 Megabytes
-                if (photoStream.Length > maxFileSize)
-                {
+                
+                if (photoStream.CanSeek && photoStream.Length > maxFileSize)
+                { 
                     return new ImageUploadResult
                     {
-                        Error = new Error { Message = "File size exceeds the 5MB limit. Upload rejected." }
+                            Error = new Error { Message = "File size exceeds the 5MB limit. Upload rejected." }
                     };
                 }
+                
 
                 var uploadParams = new ImageUploadParams
                 {
                     File = new FileDescription(fileName, photoStream),
-                    Transformation = new Transformation().Height(500).Width(500).Crop("fill").Gravity("face"),
+                    //Transformation = new Transformation().Height(500).Width(500).Crop("fill").Gravity("face"),
                     Folder = "yaungmel_pos_product_photos"
                 };
 
@@ -53,9 +55,10 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Photo upload error: {ex}");
                 return new ImageUploadResult
                 {
-                    Error = new Error { Message = ex.Message }
+                    Error = new Error { Message = $"Internal error during photo upload: {ex.Message}" }
                 };
             }
         }

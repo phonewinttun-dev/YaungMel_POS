@@ -12,9 +12,9 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
     [Authorize(Roles = "Admin,Staff")]
     public class CategoriesController : ControllerBase
     {
-        private readonly IProductCatalogService _service;
+        private readonly ICategoryService _service;
 
-        public CategoriesController(IProductCatalogService service)
+        public CategoriesController(ICategoryService service)
         {
             _service = service;
         }
@@ -55,6 +55,7 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
         }
 
         // POST: api/categories/
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateCategoryDTO request)
         {

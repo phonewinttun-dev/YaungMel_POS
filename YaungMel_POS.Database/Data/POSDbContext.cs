@@ -17,6 +17,7 @@ public class POSDbContext: DbContext
     public DbSet<Tbl_Summary> Summaries { get; set; }
     public DbSet<Tbl_User> Users { get; set; }
     public DbSet<Tbl_User_Token> UserToken { get; set; }
+    public DbSet<Tbl_AuditLog> AuditLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -28,6 +29,8 @@ public class POSDbContext: DbContext
         modelBuilder.Entity<Tbl_Summary>().ToTable("Tbl_Summary");
         modelBuilder.Entity<Tbl_User_Token>().ToTable("Tbl_User_Token");
         modelBuilder.Entity<Tbl_User>().ToTable("Tbl_User");
+        modelBuilder.Entity<Tbl_AuditLog>().ToTable("Tbl_AuditLog");
+
 
         // map Tbl_product to Tbl_category
         modelBuilder.Entity<Tbl_Product>()

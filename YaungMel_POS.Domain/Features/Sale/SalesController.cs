@@ -64,7 +64,7 @@ namespace YaungMel_POS.Domain.Features.Sale
 
             return CreatedAtAction(
                 nameof(GetByVoucherCode),
-                new { id = result.Data!.Id },
+                new { voucherCode = result.Data!.VoucherCode },
                 result);
         }
     }

@@ -3,16 +3,22 @@ using YaungMel_POS.Domain.DTOs;
 using YaungMel_POS.Database.Data;
 using YaungMel_POS.Database.Models;
 using YaungMel_POS.Shared.Responses;
+using YaungMel_POS.Domain.Features.Audit;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace YaungMel_POS.Domain.Features.Sale;
 
 public class SaleService : ISaleService
 {
     private readonly POSDbContext _db;
+    private readonly IAuditService _auditService;
+    private readonly JsonSerializerOptions _jsonOptions = new() { ReferenceHandler = ReferenceHandler.IgnoreCycles };
 
-    public SaleService(POSDbContext db)
+    public SaleService(POSDbContext db, IAuditService auditService)
     {
         _db = db;
+        _auditService = auditService;
     }
 
     private IQueryable<Tbl_Product> ActiveProduct => _db.Products.Where(p => !p.DeleteFlag);
@@ -73,6 +79,23 @@ public class SaleService : ISaleService
 
             _db.Sales.Add(saveModel);
             await _db.SaveChangesAsync();
+
+            await _auditService.LogCreateAsync(new
+            {
+                saveModel.Id,
+                saveModel.TotalPrice,
+                saveModel.VoucherCode,
+                saveModel.CreatedAt,
+                saveModel.CreatedBy,
+                SaleItems = saveModel.SaleItems.Select(si => new
+                {
+                    si.Id,
+                    si.ProductId,
+                    si.Quantity,
+                    si.Price
+                })
+            }, userId, "Sale");
+
             await transaction.CommitAsync();
 
             var resModel = new SaleDTO

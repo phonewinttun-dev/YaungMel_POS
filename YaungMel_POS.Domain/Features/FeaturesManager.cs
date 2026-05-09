@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using YaungMel_POS.Database.Data;
+using YaungMel_POS.Domain.Features.Audit;
 using YaungMel_POS.Domain.Features.Auth;
 using YaungMel_POS.Domain.Features.Dashboard;
 using YaungMel_POS.Domain.Features.Inventory;
@@ -56,7 +57,9 @@ namespace YaungMel_POS.Domain.Features
                 builder.Services.AddScoped<IPointService, DisabledPointService>();
             }
             // Register Features
-            builder.Services.AddScoped<IProductCatalogService, ProductCatalogService>();
+            builder.Services.AddScoped<IAuditService, AuditService>();
+            builder.Services.AddScoped<IProductService, ProductService>();
+            builder.Services.AddScoped<ICategoryService, CategoryService>();
             builder.Services.AddScoped<ISearchService, SearchService>();
             builder.Services.AddScoped<IInventoryService, InventoryService>();
             builder.Services.AddScoped<ISaleService, SaleService>();

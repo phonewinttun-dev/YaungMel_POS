@@ -1,27 +1,31 @@
-using CloudinaryDotNet.Actions;
-using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using YaungMel_POS.Database.Data;
 using YaungMel_POS.Database.Models;
 using YaungMel_POS.Domain.DTOs;
+using YaungMel_POS.Domain.Features.Audit;
 using YaungMel_POS.Shared.Responses;
 
 namespace YaungMel_POS.Domain.Features.ProductsCatalog
 {
-    public class ProductCatalogService: IProductCatalogService
+    public class ProductService: IProductService
     {
         private readonly POSDbContext _db;
         private readonly IPhotoService _photoService;
+        private readonly JsonSerializerOptions _jsonOptions = new() { ReferenceHandler = ReferenceHandler.IgnoreCycles };
+        private readonly IAuditService _auditService;
 
-        public ProductCatalogService(POSDbContext db, IPhotoService photoService)
+        public ProductService(POSDbContext db, IPhotoService photoService, IAuditService auditService)
         {
             _db = db;
             _photoService = photoService;
+            _auditService = auditService;
         }
 
         private IQueryable<Tbl_Product> ActiveProductQuery => _db.Products
@@ -38,8 +42,8 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                     .AsNoTracking()
                     .CountAsync();
 
-                 var pageCount = totalItems / pageSize;
-                 if (totalItems % pageSize > 0) pageCount++;
+                var pageCount = totalItems / pageSize;
+                if (totalItems % pageSize > 0) pageCount++;
 
                 var products = await ActiveProductQuery
                     .AsNoTracking()
@@ -92,8 +96,8 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                     Id = product.Id,
                     Name = product.Name,
                     Description = product.Description,
-                    ImageUrl= product.ImageUrl,
-                    ImageId= product.ImageId,
+                    ImageUrl = product.ImageUrl,
+                    ImageId = product.ImageId,
                     Price = product.Price,
                     StockQuantity = product.StockQuantity,
                     CategoryId = product.CategoryId,
@@ -124,7 +128,7 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                         Name = p.Name,
                         Description = p.Description,
                         ImageUrl = p.ImageUrl,
-                        ImageId= p.ImageId,
+                        ImageId = p.ImageId,
                         Price = p.Price,
                         StockQuantity = p.StockQuantity,
                         CategoryId = p.CategoryId,
@@ -143,9 +147,90 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
         }
         #endregion
 
-        #region create product
-        public async Task<Result<ProductDTO>> CreateProductAsync(CreateProductDTO request, int userId)
+        //#region create product
+        //public async Task<Result<ProductDTO>> CreateProductAsync(CreateProductDTO request, int userId)
+        //{
+        //    try
+        //    {
+        //        var duplicateProduct = await _db.Products
+        //            .AnyAsync(p => p.Name.ToLower() == request.Name.Trim().ToLower() && !p.DeleteFlag);
+
+        //        if (duplicateProduct) return Result<ProductDTO>.SystemError("Product with the same name already exists.");
+
+        //        var categoryExists = await _db.Categories
+        //            .AnyAsync(c => c.Id == request.CategoryId && !c.DeleteFlag);
+
+        //        if (!categoryExists) return Result<ProductDTO>.SystemError("Category not found");
+
+        //        var newProduct = new Tbl_Product
+        //        {
+        //            Name = request.Name.Trim(),
+        //            Description = request.Description?.Trim(),
+        //            Price = request.Price,
+        //            StockQuantity = request.StockQuantity,
+        //            CategoryId = request.CategoryId,
+        //            IsActive = true,
+        //            DeleteFlag = false,
+        //            CreatedBy = userId,
+        //            CreatedAt = DateTime.UtcNow
+        //        };
+
+        //        _db.Products.Add(newProduct);
+        //        await _db.SaveChangesAsync();
+
+        //        // Create Audit Log
+        //        var audit = new Tbl_AuditLog
+        //        {
+        //            EntityName = "Product",
+        //            Action = "Create",
+        //            EntityId = newProduct.Id,
+        //            NewValues = JsonSerializer.Serialize(new
+        //            {
+        //                newProduct.Id,
+        //                newProduct.Name,
+        //                newProduct.Description,
+        //                newProduct.Price,
+        //                newProduct.StockQuantity,
+        //                newProduct.CategoryId,
+        //                newProduct.ImageUrl,
+        //                newProduct.ImageId,
+        //                newProduct.IsActive,
+        //                newProduct.DeleteFlag,
+        //                newProduct.CreatedAt,
+        //                newProduct.CreatedBy
+        //            }, _jsonOptions),
+        //            ChangedBy = userId,
+        //            CreatedAt = DateTime.UtcNow
+        //        };
+        //        _db.AuditLogs.Add(audit);
+        //        await _db.SaveChangesAsync();
+
+        //        var data = new ProductDTO
+        //        {
+        //            Id = newProduct.Id,
+        //            Name = newProduct.Name,
+        //            Description = newProduct.Description,
+        //            Price = newProduct.Price,
+        //            StockQuantity = newProduct.StockQuantity,
+        //            CategoryId = newProduct.CategoryId,
+        //            DeleteFlag = newProduct.DeleteFlag,
+        //            IsActive = newProduct.IsActive,
+        //            Version = newProduct.xmin
+        //        };
+
+        //        return Result<ProductDTO>.Success(data, "Product created successfully.");
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return Result<ProductDTO>.SystemError(ex.Message);
+        //    }
+        //}
+        //#endregion
+
+        #region create product with photo upload
+        public async Task<Result<ProductDTO>> CreateProductAsync(CreateProductDTO request, Stream photoStream, string fileName, int userId)
         {
+            string photoPublicId = null;
             try
             {
                 var duplicateProduct = await _db.Products
@@ -158,61 +243,7 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
 
                 if (!categoryExists) return Result<ProductDTO>.SystemError("Category not found");
 
-                var newProduct = new Tbl_Product
-                {
-                    Name = request.Name.Trim(),
-                    Description = request.Description?.Trim(),
-                    Price = request.Price,
-                    StockQuantity = request.StockQuantity,
-                    CategoryId = request.CategoryId,
-                    IsActive = true,
-                    DeleteFlag = false,
-                    CreatedBy = userId,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                _db.Products.Add(newProduct);
-
-                await _db.SaveChangesAsync();
-
-                var data = new ProductDTO
-                {
-                    Id = newProduct.Id,
-                    Name = newProduct.Name,
-                    Description = newProduct.Description,
-                    Price = newProduct.Price,
-                    StockQuantity = newProduct.StockQuantity,
-                    CategoryId = newProduct.CategoryId,
-                    DeleteFlag = newProduct.DeleteFlag,
-                    IsActive = newProduct.IsActive,
-                    Version = newProduct.xmin
-                };
-
-                return Result<ProductDTO>.Success(data, "Product created successfully.");
-            }
-            catch (Exception ex)
-            {
-                return Result<ProductDTO>.SystemError(ex.Message);
-            }
-        }
-        #endregion
-
-        #region create product with photo upload
-        public async Task<Result<ProductDTO>> CreateProductWithPhotoAsync(CreateProductDTO request, Stream photoStream, string fileName, int userId)
-        {
-            
-                var duplicateProduct = await _db.Products
-                    .AnyAsync(p => p.Name.ToLower() == request.Name.Trim().ToLower() && !p.DeleteFlag);
-
-                if (duplicateProduct) return Result<ProductDTO>.SystemError("Product with the same name already exists.");
-
-                var categoryExists = await _db.Categories
-                    .AnyAsync(c => c.Id == request.CategoryId && !c.DeleteFlag);
-
-                if (!categoryExists) return Result<ProductDTO>.SystemError("Category not found");
-
                 string photoUrl = null;
-                string photoPublicId = null;
 
                 if (photoStream != null)
                 {
@@ -231,8 +262,7 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                     photoUrl = uploadResult.SecureUrl.ToString();
                     photoPublicId = uploadResult.PublicId;
                 }
-            try
-            {
+
                 var newProduct = new Tbl_Product
                 {
                     Name = request.Name.Trim(),
@@ -250,6 +280,8 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
 
                 _db.Products.Add(newProduct);
                 await _db.SaveChangesAsync();
+
+                // await _auditService.LogCreateAsync(newProduct, userId, "Product");
 
                 var data = new ProductDTO
                 {
@@ -334,6 +366,8 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                 if (product is null || product.DeleteFlag == true)
                     return Result<ProductDTO>.NotFound("Product not found");
 
+                //var oldValues = JsonSerializer.Serialize(product, _jsonOptions);
+
                 // Set the RowVersion from the client request so EF Core can detect concurrent modifications
                 _db.Entry(product).Property(p => p.xmin).OriginalValue = request.Version;
 
@@ -387,6 +421,8 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
 
                 await _db.SaveChangesAsync();
 
+                //await _auditService.LogUpdateAsync(product, userId, oldValues, "Product");
+
                 var data = new ProductDTO
                 {
                     Id = product.Id,
@@ -395,7 +431,9 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                     Price = product.Price,
                     StockQuantity = product.StockQuantity,
                     CategoryId = product.CategoryId,
-                    Version = product.xmin
+                    Version = product.xmin,
+                    ImageUrl = product.ImageUrl,
+                    ImageId = product.ImageId
                 };
 
                 return Result<ProductDTO>.Success(data, "Product updated successfully.");
@@ -470,211 +508,5 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
         }
         #endregion
 
-        #region get categories pagination
-        public async Task<Result<CategoryListResponseModel>> GetCategoriesAsync(int pageNo, int pageSize)
-        {
-            try
-            {
-                if (pageSize <= 0) return Result<CategoryListResponseModel>.SystemError("Page size must be greater than 0.");
-                var totalItems = await _db.Categories
-                    .AsNoTracking()
-                    .CountAsync();
-
-                var pageCount = totalItems / pageSize;
-                if (totalItems % pageSize > 0) pageCount++;
-
-                var categories = await _db.Categories
-                    .AsNoTracking()
-                    .OrderByDescending(c => c.Id)
-                    .Skip((pageNo - 1) * pageSize)
-                    .Take(pageSize)
-                    .Select(c => new CategoryDTO
-                    {
-                        Id = c.Id,
-                        Name = c.Name,
-                        Description = c.Description
-                    })
-                    .ToListAsync();
-
-                var result = new CategoryListResponseModel
-                {
-                    Items = categories,
-                    PageSetting = new PageSettingDTO(pageNo, pageSize, pageCount)
-                };
-
-                return Result<CategoryListResponseModel>.Success(result);
-            }
-            catch (Exception ex)
-            {
-                return Result<CategoryListResponseModel>.SystemError($"Error: {ex.Message}");
-            }
-        }
-        #endregion
-
-        #region get category by id
-        public async Task<Result<CategoryDTO>> GetCategoryByIdAsync(int id)
-        {
-            try
-            {
-                var category = await _db.Categories
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(c => c.Id == id);
-
-                if (category is null) return Result<CategoryDTO>.NotFound("Category not found.");
-
-
-                var data = new CategoryDTO
-                {
-                    Id = category.Id,
-                    Name = category.Name,
-                    Description = category.Description
-                };
-
-                return Result<CategoryDTO>.Success(data);
-            }
-            catch (Exception ex)
-            {
-                return Result<CategoryDTO>.SystemError(ex.Message);
-            }
-        }
-        #endregion
-
-        #region create category
-        public async Task<Result<CategoryDTO>> CreateCategoryAsync(CreateCategoryDTO request, int userId)
-        {
-            try
-            {
-                var duplicateCategory = await _db.Categories
-                    .AnyAsync(c => c.Name.ToLower() == request.Name.Trim().ToLower() && !c.DeleteFlag);
-
-                if (duplicateCategory) return Result<CategoryDTO>.SystemError("Category with same name exists.");
-
-                var newCategory = new Tbl_Category
-                {
-                    Name = request.Name.Trim(),
-                    Description = request.Description?.Trim(),
-                    CreatedBy = userId,
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                _db.Categories.Add(newCategory);
-
-                await _db.SaveChangesAsync();
-
-                var data = new CategoryDTO
-                {
-                    Id = newCategory.Id,
-                    Name = newCategory.Name,
-                    Description = newCategory.Description
-                };
-
-                return Result<CategoryDTO>.Success(data, "Category created successfully.");
-            }
-            catch (Exception ex)
-            {
-                return Result<CategoryDTO>.SystemError(ex.Message);
-            }
-        }
-        #endregion
-
-        #region update category
-        public async Task<Result<CategoryDTO>> UpdateCategoryAsync(int id, UpdateCategoryDTO request, int userId)
-        {
-            try
-            {
-                var category = await _db.Categories.FirstOrDefaultAsync(c => c.Id == id);
-
-                if (category is null) return Result<CategoryDTO>.NotFound("Category not found.");
-
-                if (!string.IsNullOrWhiteSpace(request.Name))
-                {
-                    var isDuplicate = await _db.Categories.AnyAsync(c =>
-                        c.Id != id &&
-                        !c.DeleteFlag &&
-                        c.Name != null &&
-                        c.Name.ToLower() == request.Name.Trim().ToLower());
-
-                    if (isDuplicate)
-                        return Result<CategoryDTO>.SystemError("Another category with the same name already exists.");
-
-                    category.Name = request.Name.Trim();
-                }
-
-                if (!string.IsNullOrWhiteSpace(request.Description))
-                    category.Description = request.Description.Trim();
-
-                category.UpdatedAt = DateTime.UtcNow;
-                category.UpdatedBy = userId;
-
-                await _db.SaveChangesAsync();
-
-                var data = new CategoryDTO
-                {
-                    Id = category.Id,
-                    Name = category.Name,
-                    Description = category.Description
-                };
-
-                return Result<CategoryDTO>.Success(data, "Category updated successfully.");
-            }
-            catch (Exception ex)
-            {
-                return Result<CategoryDTO>.SystemError(ex.Message);
-            }
-        }
-        #endregion
-
-        #region delete category
-        public async Task<Result<bool>> DeleteCategoryAsync(int id, int userId)
-        {
-            try
-            {
-                var category = await _db.Categories.FirstOrDefaultAsync(c => c.Id == id);
-
-                if (category is null) return Result<bool>.NotFound("Category not found!");
-
-                var hasProducts = await _db.Products.AnyAsync(p => p.CategoryId == id && !p.DeleteFlag);
-
-                if (hasProducts) return Result<bool>.SystemError("Cannot delete category with existing products.");
-
-                category.DeleteFlag = true;
-                category.UpdatedAt = DateTime.UtcNow;
-                category.UpdatedBy = userId;
-
-                await _db.SaveChangesAsync();
-
-                return Result<bool>.Success(true, "Category deleted successfully.");
-            }
-            catch (Exception ex)
-            {
-                return Result<bool>.SystemError(ex.Message);
-            }
-        }
-        #endregion
-
-        #region get categories by term
-        public async Task<Result<List<CategoryDTO>>> GetCategoriesByTermAsync(string term)
-        {
-            try
-            {
-                var categories = await _db.Categories
-                    .AsNoTracking()
-                    .Where(c => c.Name.Contains(term) || c.Description != null && c.Description.Contains(term))
-                    .Select(c => new CategoryDTO
-                    {
-                        Id = c.Id,
-                        Name = c.Name,
-                        Description = c.Description
-                    })
-                    .ToListAsync();
-
-                return Result<List<CategoryDTO>>.Success(categories);
-            }
-            catch (Exception ex)
-            {
-                return Result<List<CategoryDTO>>.SystemError(ex.Message);
-            }
-        }
-        #endregion
     }
 }

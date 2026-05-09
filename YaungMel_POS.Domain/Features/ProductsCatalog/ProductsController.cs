@@ -15,9 +15,9 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
     [Authorize(Roles = "Admin,Staff")]
     public class ProductsController : ControllerBase
     {
-        private readonly IProductCatalogService _service;
+        private readonly IProductService _service;
 
-        public ProductsController(IProductCatalogService service)
+        public ProductsController(IProductService service)
         {
             _service = service;
         }
@@ -61,25 +61,26 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
         }
 
         // POST: api/products/
-        [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateProductDTO createRequest)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+        //[HttpPost]
+        //public async Task<IActionResult> Create([FromBody] CreateProductDTO createRequest)
+        //{
+        //    if (!ModelState.IsValid)
+        //        return BadRequest(ModelState);
 
-            var result = await _service.CreateProductAsync(createRequest, GetCurrentUserId());
+        //    var result = await _service.CreateProductAsync(createRequest, GetCurrentUserId());
 
-            if (!result.IsSuccess)
-                return BadRequest(result);
+        //    if (!result.IsSuccess)
+        //        return BadRequest(result);
 
-            return CreatedAtAction(
-                nameof(GetById),
-                new { id = result.Data!.Id },
-                result);
-        }
+        //    return CreatedAtAction(
+        //        nameof(GetById),
+        //        new { id = result.Data!.Id },
+        //        result);
+        //}
 
-        [HttpPost("photo-upload")]
-        public async Task<IActionResult> UploadPhoto([FromForm] CreateProductDTO createRequest, IFormFile? photoFile)
+        [Authorize(Roles = "Admin")]
+        [HttpPost()]
+        public async Task<IActionResult> Create([FromForm] CreateProductDTO createRequest, IFormFile? photoFile)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -93,9 +94,9 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
             // 2. Open a read stream from the IFormFile
             using var stream = photoFile.OpenReadStream();
 
-            // 3. Pass the stream and the filename to your service
+            // 3. Pass the stream and the filename to service
             var fileName = string.IsNullOrWhiteSpace(photoFile.FileName) ? "uploaded-photo" : photoFile.FileName;
-            var result = await _service.CreateProductWithPhotoAsync(createRequest, stream, fileName, GetCurrentUserId());
+            var result = await _service.CreateProductAsync(createRequest, stream, fileName, GetCurrentUserId());
 
             if (!result.IsSuccess)
                 return BadRequest(result);
@@ -108,6 +109,7 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
 
         // this endpoint is just for testing
         // POST: api/products/bulk
+        [Authorize(Roles = "Admin")]
         [HttpPost("bulk")]
         public async Task<IActionResult> BulkCreate([FromBody] List<CreateProductDTO> bulkRequest)
         {

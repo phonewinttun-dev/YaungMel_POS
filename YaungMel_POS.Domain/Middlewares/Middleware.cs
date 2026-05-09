@@ -53,13 +53,13 @@ public class Middleware
                     if (result != null)
                     {
                         ValidateToken(result.AccessToken, context);
-                        
+
                         context.Response.Headers.Append("X-Access-Token", result.AccessToken);
 
                         var cookieOptions = new CookieOptions
                         {
                             HttpOnly = true,
-                            Secure = true, 
+                            Secure = true,
                             SameSite = SameSiteMode.Strict,
                             Expires = DateTime.UtcNow.AddDays(7)
                         };
@@ -73,8 +73,8 @@ public class Middleware
             }
         }
 
-        await _next(context);
-    }
+            await _next(context);
+        }
 
     private bool ValidateToken(string token, HttpContext context)
     {
