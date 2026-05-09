@@ -111,14 +111,14 @@ try
 
     var app = builder.Build();
 
-    using (var scope = app.Services.CreateScope())
-    {
-        var db = scope.ServiceProvider.GetRequiredService<POSDbContext>();
+    //using (var scope = app.Services.CreateScope())
+    //{
+    //    var db = scope.ServiceProvider.GetRequiredService<POSDbContext>();
 
-        await db.Database.MigrateAsync();
+    //    await db.Database.MigrateAsync();
 
-        await DatabaseSeeder.SeedAsync(app.Services);
-    }
+    //    await DatabaseSeeder.SeedAsync(app.Services);
+    //}
 
     // Configure the HTTP request pipeline.
     if (app.Environment.IsDevelopment())

@@ -118,7 +118,7 @@ public class SummaryService : ISummaryService
                     Date = s.Date,
                     TotalSale = s.TotalSale,
                     TotalAmount = s.TotalAmount,
-                    TopSaleProductName = s.TopSaleProduct.Name
+                    TopSaleProductName = s.TopSaleProduct != null ? s.TopSaleProduct.Name : null
                 })
                 .ToListAsync();
 
@@ -186,6 +186,36 @@ public class SummaryService : ISummaryService
         catch (Exception ex)
         {
             return Result<SummaryDetailDto>.SystemError(ex.Message);
+        }
+    }
+    #endregion
+
+    #region Get Summary By Date Range
+    public async Task<Result<List<SummaryDTO>>> GetSummaryByDateRangeAsync(DateTime startDate, DateTime endDate)
+    {
+        try
+        {
+            var start = startDate.Date;
+            var end = endDate.Date;
+
+            var summaries = await _db.Summaries
+                .AsNoTracking()
+                .Where(s => s.Date >= start && s.Date <= end)
+                .OrderByDescending(s => s.Date)
+                .Select(s => new SummaryDTO
+                {
+                    Date = s.Date,
+                    TotalSale = s.TotalSale,
+                    TotalAmount = s.TotalAmount,
+                    TopSaleProductName = s.TopSaleProduct != null ? s.TopSaleProduct.Name : null
+                })
+                .ToListAsync();
+
+            return Result<List<SummaryDTO>>.Success(summaries);
+        }
+        catch (Exception ex)
+        {
+            return Result<List<SummaryDTO>>.SystemError(ex.Message);
         }
     }
     #endregion

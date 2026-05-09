@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using YaungMel_POS.Shared.Responses;
 
@@ -67,6 +67,25 @@ namespace YaungMel_POS.Domain.Features.Summary
                     ? NotFound(result)
                     : BadRequest(result);
             }
+
+            return Ok(result);
+        }
+
+        // GET: api/summaries/by-date-range?startDate=2026-05-01&endDate=2026-05-07
+        [HttpGet("by-date-range")]
+        public async Task<IActionResult> GetSummaryByDateRange(
+            [FromQuery] DateTime startDate,
+            [FromQuery] DateTime endDate)
+        {
+            if (startDate == default || endDate == default)
+            {
+                return BadRequest(Result<object>.SystemError("Start date and end date are required."));
+            }
+
+            var result = await _service.GetSummaryByDateRangeAsync(startDate, endDate);
+
+            if (!result.IsSuccess)
+                return BadRequest(result);
 
             return Ok(result);
         }
