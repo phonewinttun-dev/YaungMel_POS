@@ -1,4 +1,4 @@
-﻿using DinkToPdf;
+using DinkToPdf;
 using DinkToPdf.Contracts;
 using System;
 using System.Collections.Generic;
@@ -225,6 +225,87 @@ namespace YaungMel_POS.Domain.Features.Report
                 </tr>
                 </tbody>
             </table>");
+
+            sb.Append("</body></html>");
+            return sb.ToString();
+        }
+
+        public async Task<byte[]> GenerateDetailedRangePdfAsync(DateTime startDate, DateTime endDate)
+        {
+            var result = await _summaryService.GetSummaryByDateRangeAsync(startDate, endDate);
+            if (!result.IsSuccess) return Array.Empty<byte>();
+
+            var html = GenerateRangeHtml(result.Data!, startDate, endDate);
+            return ConvertHtmlToPdf(html, $"Range Report - {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
+        }
+
+        private string GenerateRangeHtml(List<SummaryDTO> summaries, DateTime start, DateTime end)
+        {
+            var sb = new StringBuilder();
+            sb.Append("<html><head>");
+            sb.Append(GetCommonStyles());
+            sb.Append("</head><body>");
+
+            // Header info
+            sb.Append($@"
+            <table class='header-table'>
+                <tr>
+                    <td class='company-name'>YAUNG MEL POS SOLUTIONS</td>
+                    <td class='meta-info'>Date : {DateTime.Now:dd/MM/yyyy HH:mm:ss}</td>
+                </tr>
+            </table>");
+
+            sb.Append("<div class='report-title'>YaungMel POS Date Range Summary Report</div>");
+
+            sb.Append($@"
+            <div style='margin-bottom: 15px;'>
+                <span class='bold'>Report Period:</span> {start:dd/MM/yyyy} to {end:dd/MM/yyyy}
+            </div>");
+
+            // Table Header
+            sb.Append(@"
+            <table class='data-table'>
+                <thead>
+                    <tr>
+                        <th style='width: 100px;'>Date</th>
+                        <th class='col-desc'>Top Selling Product</th>
+                        <th class='col-qty'>Sales</th>
+                        <th class='col-total'>Total Amount</th>
+                    </tr>
+                </thead>
+                <tbody>");
+
+            decimal grandTotal = 0;
+            int totalSalesCount = 0;
+
+            foreach (var summary in summaries.OrderBy(s => s.Date))
+            {
+                sb.Append("<tr>");
+                sb.Append($"<td>{summary.Date:dd/MM/yyyy}</td>");
+                sb.Append($"<td class='col-desc'>{summary.TopSaleProductName ?? "N/A"}</td>");
+                sb.Append($"<td class='col-qty'>{summary.TotalSale}</td>");
+                sb.Append($"<td class='col-total'>{summary.TotalAmount:N0}</td>");
+                sb.Append("</tr>");
+
+                grandTotal += summary.TotalAmount;
+                totalSalesCount += summary.TotalSale;
+            }
+
+            // Grand Total Row
+            sb.Append($@"
+                <tr class='total-row'>
+                    <td colspan='2' class='text-right'>TOTAL</td>
+                    <td class='col-qty'>{totalSalesCount}</td>
+                    <td class='col-total'>{grandTotal:N0}</td>
+                </tr>");
+
+            sb.Append("</tbody></table>");
+
+            sb.Append($@"
+            <div style='margin-top: 20px; font-size: 9pt;'>
+                <p><span class='bold'>Total Days Processed:</span> {summaries.Count}</p>
+                <p><span class='bold'>Average Daily Amount:</span> {(summaries.Count > 0 ? (grandTotal / summaries.Count).ToString("N0") : "0")} MMK</p>
+            </div>");
 
             sb.Append("</body></html>");
             return sb.ToString();
