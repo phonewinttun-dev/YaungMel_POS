@@ -12,8 +12,7 @@ public static class DatabaseSeeder
         var db = scope.ServiceProvider.GetRequiredService<POSDbContext>();
 
 
-
-        // Clear all tables and restart identities
+        //Clear all tables and restart identities
         await db.Database.ExecuteSqlRawAsync(@"
             TRUNCATE TABLE ""Tbl_Summary"", ""Tbl_SaleItem"", ""Tbl_Sale"", ""Tbl_Product"", ""Tbl_Category"", ""Tbl_User"", ""Tbl_User_Token"", ""Tbl_AuditLog"" RESTART IDENTITY CASCADE;
         ");

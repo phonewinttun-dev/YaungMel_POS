@@ -60,35 +60,31 @@ public class DashboardService : IDashboardService
         try
         {
             var validPeriods = new[] { "day", "week", "month" };
-            var normalizedPeriod = period.ToLower().Trim();
+            var normalizedPeriod = (period ?? "day").ToLower().Trim();
 
             if (!validPeriods.Contains(normalizedPeriod))
                 return Result<SalesPerPeriodDTO>.SystemError("Invalid period. Use 'day', 'week', or 'month'.");
 
             List<SalesPeriodGroupDTO> groupedData;
+            var salesData = await _db.Sales
+                .Select(s => new { s.CreatedAt, s.TotalPrice })
+                .ToListAsync();
 
             if (normalizedPeriod == "day")
             {
-                groupedData = await _db.Sales
+                groupedData = salesData
                     .GroupBy(s => s.CreatedAt.Date)
+                    .OrderBy(g => g.Key)
                     .Select(g => new SalesPeriodGroupDTO
                     {
-                        Label = g.Key.ToString("yyyy-MM-dd"),
+                        Label = g.Key.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
                         TotalRevenue = g.Sum(s => s.TotalPrice),
                         TotalSales = g.Count()
                     })
-                    .OrderBy(g => g.Label)
-                    .ToListAsync();
+                    .ToList();
             }
             else if (normalizedPeriod == "week")
             {
-                // Grouping by week in SQL is complex due to different calendar rules.
-                // For now, we filter and group in-memory but we could optimize later if needed.
-                // To avoid OOM, we only fetch the necessary data.
-                var salesData = await _db.Sales
-                    .Select(s => new { s.CreatedAt, s.TotalPrice })
-                    .ToListAsync();
-
                 groupedData = salesData
                     .GroupBy(s => new
                     {
@@ -96,37 +92,29 @@ public class DashboardService : IDashboardService
                         Week = CultureInfo.CurrentCulture.Calendar
                             .GetWeekOfYear(s.CreatedAt, CalendarWeekRule.FirstFourDayWeek, DayOfWeek.Monday)
                     })
+                    .OrderBy(g => g.Key.Year)
+                    .ThenBy(g => g.Key.Week)
                     .Select(g => new SalesPeriodGroupDTO
                     {
                         Label = $"{g.Key.Year} - Week {g.Key.Week}",
                         TotalRevenue = g.Sum(s => s.TotalPrice),
                         TotalSales = g.Count()
                     })
-                    .OrderBy(g => g.Label)
                     .ToList();
             }
             else if (normalizedPeriod == "month")
             {
-                groupedData = await _db.Sales
+                groupedData = salesData
                     .GroupBy(s => new { s.CreatedAt.Year, s.CreatedAt.Month })
+                    .OrderBy(g => g.Key.Year)
+                    .ThenBy(g => g.Key.Month)
                     .Select(g => new SalesPeriodGroupDTO
                     {
-                        // We construct the label in-memory after fetching grouped data to use MonthName
-                        Label = g.Key.Year + "-" + g.Key.Month.ToString("D2"),
+                        Label = $"{CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(g.Key.Month)} {g.Key.Year}",
                         TotalRevenue = g.Sum(s => s.TotalPrice),
                         TotalSales = g.Count()
                     })
-                    .OrderBy(g => g.Label)
-                    .ToListAsync();
-
-                // Refine labels to use month names
-                foreach (var item in groupedData)
-                {
-                    var parts = item.Label.Split('-');
-                    var year = int.Parse(parts[0]);
-                    var month = int.Parse(parts[1]);
-                    item.Label = $"{CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(month)} {year}";
-                }
+                    .ToList();
             }
             else
             {
