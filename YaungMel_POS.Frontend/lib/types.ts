@@ -303,6 +303,11 @@ export interface SummaryListResponseModel {
   pageSetting: PageSettingDTO;
 }
 
+export interface SaleListResponseModel {
+  items: SaleDTO[];
+  pageSetting: PageSettingDTO;
+}
+
 export interface SummaryDetailDto {
   summary: SummaryDTO;
   sales: SaleDTO[];

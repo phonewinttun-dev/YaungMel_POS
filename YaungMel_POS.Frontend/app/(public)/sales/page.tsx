@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, Fragment } from "react";
 import { salesApi } from "@/lib/api";
-import type { SaleDTO } from "@/lib/types";
+import type { SaleDTO, PageSettingDTO } from "@/lib/types";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -12,9 +12,15 @@ import { SkeletonTable } from "@/components/ui/Skeleton";
 import { AnimatedPage } from "@/components/ui/AnimatedPage";
 import { toast } from "@/components/ui/Toast";
 import { Receipt, ChevronDown, ChevronUp, Search, X } from "lucide-react";
+import { Pagination } from "@/components/ui/Pagination";
 
 export default function SalesPage() {
   const [sales, setSales] = useState<SaleDTO[]>([]);
+  const [pageSetting, setPageSetting] = useState<PageSettingDTO>({
+    pageNo: 1,
+    pageSize: 10,
+    pageCount: 0,
+  });
   const [isLoading, setIsLoading] = useState(true);
   const [selectedSale, setSelectedSale] = useState<SaleDTO | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -24,16 +30,19 @@ export default function SalesPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [isSearchMode, setIsSearchMode] = useState(false);
 
-  const loadSales = useCallback(async () => {
+  const loadSales = useCallback(async (page: number) => {
     setIsLoading(true);
     try {
-      const res = await salesApi.getAll();
-      if (res.isSuccess && res.data) setSales(res.data);
+      const res = await salesApi.getPaged(page, pageSetting.pageSize);
+      if (res.isSuccess && res.data) {
+        setSales(res.data.items);
+        setPageSetting(res.data.pageSetting);
+      }
     } catch { toast("error", "Failed to load sales"); }
     finally { setIsLoading(false); }
-  }, []);
-
-  useEffect(() => { void loadSales(); }, [loadSales]);
+  }, [pageSetting.pageSize]);
+  
+  useEffect(() => { void loadSales(1); }, [loadSales]);
 
   const handleVoucherSearch = async () => {
     if (!voucherSearch.trim()) {
@@ -92,7 +101,7 @@ export default function SalesPage() {
   const handleClearSearch = async () => {
     setVoucherSearch("");
     setIsSearchMode(false);
-    await loadSales();
+    await loadSales(1);
   };
 
   return (
@@ -172,6 +181,17 @@ export default function SalesPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+
+          {/* Pagination */}
+          {!isSearchMode && !isLoading && pageSetting.pageCount > 1 && (
+            <div className="p-4 border-t border-[var(--border-primary)] bg-[var(--bg-secondary)] rounded-b-2xl">
+              <Pagination
+                currentPage={pageSetting.pageNo}
+                totalPages={pageSetting.pageCount}
+                onPageChange={(page) => void loadSales(page)}
+              />
             </div>
           )}
         </Card>

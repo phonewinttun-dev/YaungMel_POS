@@ -35,6 +35,7 @@ import type {
   SummaryDTO,
   SummaryListResponseModel,
   SummaryDetailDto,
+  SaleListResponseModel,
 } from "./types";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -218,6 +219,9 @@ export const salesApi = {
         data: normalizeSalesListData(raw.data),
       } as ApiResponse<SaleDTO[]>;
     }),
+
+  getPaged: (pageNo: number, pageSize: number) =>
+    api.get<ApiResponse<SaleListResponseModel>>(`/api/sales/paged?pageNo=${pageNo}&pageSize=${pageSize}`).then(unwrap),
 
   getById: (id: number) =>
     api.get<ApiResponse<SaleDTO>>(`/api/sales/${id}`).then(unwrap),

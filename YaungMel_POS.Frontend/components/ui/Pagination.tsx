@@ -16,68 +16,73 @@ export function Pagination({
 }: PaginationProps) {
   if (totalPages <= 1) return null;
 
-  const pages = [];
-  const maxVisible = 5;
-  
-  let start = Math.max(1, currentPage - Math.floor(maxVisible / 2));
-    const end = Math.min(totalPages, start + maxVisible - 1);
-  
-  if (end - start + 1 < maxVisible) {
-    start = Math.max(1, end - maxVisible + 1);
-  }
+  // Generate page numbers to show
+  const getPageNumbers = () => {
+    const pages = [];
+    const showMax = 5;
 
-  for (let i = start; i <= end; i++) {
-    pages.push(i);
-  }
+    if (totalPages <= showMax + 2) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+    } else {
+      if (currentPage <= 3) {
+        for (let i = 1; i <= 4; i++) pages.push(i);
+        pages.push("...");
+        pages.push(totalPages - 1);
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 2) {
+        pages.push(1);
+        pages.push(2);
+        pages.push("...");
+        for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
+      } else {
+        pages.push(1);
+        pages.push("...");
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
+        pages.push("...");
+        pages.push(totalPages);
+      }
+    }
+    return pages;
+  };
 
   return (
-    <div className={`flex items-center justify-center gap-1.5 mt-6 ${className}`}>
-      <button
-        onClick={() => onPageChange(1)}
-        disabled={currentPage === 1}
-        className="p-2 rounded-lg border border-[var(--border-primary)] text-[var(--text-tertiary)] hover:bg-[var(--bg-hover)] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-      >
-        <ChevronsLeft size={16} />
-      </button>
+    <div className={`flex items-center justify-center gap-1 mt-6 ${className}`}>
       <button
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="p-2 rounded-lg border border-[var(--border-primary)] text-[var(--text-tertiary)] hover:bg-[var(--bg-hover)] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+        className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-[var(--text-tertiary)] hover:text-[var(--text-primary)] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
       >
         <ChevronLeft size={16} />
+        <span>Previous</span>
       </button>
 
-      {start > 1 && <span className="px-2 text-[var(--text-tertiary)]">...</span>}
-
-      {pages.map((p) => (
-        <button
-          key={p}
-          onClick={() => onPageChange(p)}
-          className={`min-w-[36px] h-[36px] flex items-center justify-center rounded-lg text-sm font-medium transition-all ${
-            currentPage === p
-              ? "bg-[var(--accent-primary)] text-white shadow-sm"
-              : "border border-[var(--border-primary)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
-          }`}
-        >
-          {p}
-        </button>
-      ))}
-
-      {end < totalPages && <span className="px-2 text-[var(--text-tertiary)]">...</span>}
+      <div className="flex items-center gap-1 mx-2">
+        {getPageNumbers().map((p, idx) => (
+          p === "..." ? (
+            <span key={`ellipsis-${idx}`} className="px-2 text-[var(--text-tertiary)]">...</span>
+          ) : (
+            <button
+              key={p}
+              onClick={() => onPageChange(p as number)}
+              className={`min-w-[32px] h-[32px] flex items-center justify-center rounded-lg text-sm font-medium transition-all ${
+                currentPage === p
+                  ? "bg-[#1a73e8] text-white shadow-sm"
+                  : "text-[var(--text-secondary)] hover:bg-[var(--bg-hover)]"
+              }`}
+            >
+              {p}
+            </button>
+          )
+        ))}
+      </div>
 
       <button
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="p-2 rounded-lg border border-[var(--border-primary)] text-[var(--text-tertiary)] hover:bg-[var(--bg-hover)] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
+        className="flex items-center gap-1 px-3 py-2 text-sm font-medium text-[#1a73e8] hover:text-[#1557b0] disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
       >
+        <span>Next</span>
         <ChevronRight size={16} />
-      </button>
-      <button
-        onClick={() => onPageChange(totalPages)}
-        disabled={currentPage === totalPages}
-        className="p-2 rounded-lg border border-[var(--border-primary)] text-[var(--text-tertiary)] hover:bg-[var(--bg-hover)] disabled:opacity-30 disabled:hover:bg-transparent transition-colors"
-      >
-        <ChevronsRight size={16} />
       </button>
     </div>
   );
