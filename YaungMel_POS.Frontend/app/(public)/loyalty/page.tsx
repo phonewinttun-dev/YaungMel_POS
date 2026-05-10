@@ -421,15 +421,19 @@ export default function LoyaltyPage() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-lg mx-auto">
                 <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-primary)]">
                   <p className="text-xs text-[var(--text-tertiary)] uppercase">Status</p>
-                  <p className="text-lg font-bold text-[var(--accent-success)] mt-1">{claimResult.status}</p>
+                  <p className="text-lg font-bold text-[var(--accent-success)] mt-1">{claimResult.status || "Success"}</p>
                 </div>
                 <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-primary)]">
                   <p className="text-xs text-[var(--text-tertiary)] uppercase">Remaining</p>
-                  <p className="text-lg font-bold text-[var(--text-primary)] mt-1">{claimResult.remainingBalance} pts</p>
+                  <p className="text-lg font-bold text-[var(--text-primary)] mt-1">
+                    {claimResult.remainingBalance !== undefined ? `${claimResult.remainingBalance} pts` : "N/A"}
+                  </p>
                 </div>
                 <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-primary)]">
                   <p className="text-xs text-[var(--text-tertiary)] uppercase">Redemption ID</p>
-                  <p className="text-sm font-mono font-bold text-[var(--text-primary)] mt-1 break-all">{claimResult.redemptionId.slice(0, 12)}...</p>
+                  <p className="text-sm font-mono font-bold text-[var(--text-primary)] mt-1 break-all">
+                    {claimResult.redemptionId ? `${claimResult.redemptionId.slice(0, 12)}...` : "N/A"}
+                  </p>
                 </div>
               </div>
               <Button onClick={handleReset} className="mx-auto" icon={<SearchIcon size={16} />}>Claim Another Reward</Button>
@@ -503,7 +507,7 @@ export default function LoyaltyPage() {
                       {accountsData.items.map((account) => (
                         <tr key={account.id} className="group hover:bg-[var(--bg-secondary)] transition-colors duration-150">
                           <td className="py-4 px-4">
-                            <span className="text-xs font-mono text-[var(--text-tertiary)]">{account.id.slice(0, 8)}...</span>
+                            <span className="text-xs font-mono text-[var(--text-tertiary)]">{account.id?.slice(0, 8) ?? "N/A"}...</span>
                           </td>
                           <td className="py-4 px-4">
                             <div className="flex items-center gap-3">

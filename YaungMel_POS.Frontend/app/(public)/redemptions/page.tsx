@@ -57,6 +57,23 @@ export default function RedemptionsPage() {
     }
   };
 
+  const handleCancel = async (redemption: PendingRedemptionResDTO) => {
+    setUpdatingId(redemption.id);
+    try {
+      const res = await pointsApi.updateRedemptionStatus(redemption.id, "Cancelled");
+      if (res.isSuccess) {
+        toast("success", `Redemption for "${redemption.rewardName}" cancelled!`);
+        await loadRedemptions();
+      } else {
+        toast("error", res.message || "Failed to cancel redemption");
+      }
+    } catch {
+      toast("error", "Failed to cancel redemption");
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
   if (!isAdmin && !isStaff) {
     return (
       <AnimatedPage>
@@ -123,7 +140,7 @@ export default function RedemptionsPage() {
                       <td className="py-3 px-4">
                         <div>
                           <p className="text-sm font-medium text-[var(--text-primary)]">{r.externalUserId}</p>
-                          <p className="text-xs text-[var(--text-tertiary)] font-mono">{r.id.slice(0, 8)}...</p>
+                          <p className="text-xs text-[var(--text-tertiary)] font-mono">{r.id?.slice(0, 8) ?? "N/A"}...</p>
                         </div>
                       </td>
                       <td className="py-3 px-4">
@@ -146,14 +163,25 @@ export default function RedemptionsPage() {
                       </td>
                       <td className="py-3 px-4 text-right">
                         {r.status === "Pending" && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleFulfill(r)}
-                            isLoading={updatingId === r.id}
-                            icon={<CheckCircle size={14} />}
-                          >
-                            Fulfill
-                          </Button>
+                          <div className="flex items-center justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => handleCancel(r)}
+                              isLoading={updatingId === r.id}
+                              className="text-[var(--accent-danger)] hover:bg-[var(--accent-danger-soft)]"
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => handleFulfill(r)}
+                              isLoading={updatingId === r.id}
+                              icon={<CheckCircle size={14} />}
+                            >
+                              Fulfill
+                            </Button>
+                          </div>
                         )}
                       </td>
                     </tr>

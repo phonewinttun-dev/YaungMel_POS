@@ -230,9 +230,9 @@ export interface ClaimRewardReqDTO {
 }
 
 export interface ClaimRewardResDTO {
-  redemptionId: string;
-  status: string;
-  remainingBalance: number;
+  redemptionId?: string;
+  status?: string;
+  remainingBalance?: number;
 }
 
 export interface PointHistoryResDTO {
