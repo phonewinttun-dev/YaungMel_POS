@@ -7,7 +7,7 @@ namespace YaungMel_POS.Domain.Features.Summary
 
     [ApiController]
     [Route("api/summaries")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin, Staff")]
     public class SummaryController : ControllerBase
     {
         private readonly ISummaryService _service;
