@@ -114,6 +114,20 @@ export const authApi = {
     api.delete<ApiResponse<object>>(`/api/auth/users/${id}`).then(unwrap),
 };
 
+// Helper function
+const createFormDataFromDTO = (data: CreateProductDTO): FormData => {
+    const formData = new FormData();
+    formData.append("Name", data.name);
+    formData.append("Price", String(data.price));
+    formData.append("StockQuantity", String(data.stockQuantity));
+    formData.append("CategoryId", String(data.categoryId));
+    
+    if (data.description) formData.append("Description", data.description);
+    // Add more fields as needed
+
+    return formData;
+};
+
 // ─── Products API ─────────────────────────────────────────
 export const productsApi = {
   getAll: () =>
@@ -143,17 +157,13 @@ export const productsApi = {
         headers: { "Content-Type": "multipart/form-data" },
       })
       .then(unwrap),
-  create: (data: CreateProductDTO | FormData) => {
-    if (data instanceof FormData) {
-      return api.post<ApiResponse<ProductDTO>>("/api/products", data).then(unwrap);
-    }
-    const payload = new FormData();
-    payload.append("Name", data.name);
-    if (data.description) payload.append("Description", data.description);
-    payload.append("Price", String(data.price));
-    payload.append("StockQuantity", String(data.stockQuantity));
-    payload.append("CategoryId", String(data.categoryId));
-    return api.post<ApiResponse<ProductDTO>>("/api/products", payload).then(unwrap);
+  create: (input: CreateProductDTO | FormData) => {
+    const formData = input instanceof FormData 
+        ? input 
+        : createFormDataFromDTO(input);
+
+    return api.post<ApiResponse<ProductDTO>>("/api/products", formData)
+              .then(unwrap);
   },
 
   bulkCreate: (data: CreateProductDTO[]) =>

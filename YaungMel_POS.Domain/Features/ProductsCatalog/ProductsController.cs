@@ -54,7 +54,7 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
 
         // POST: api/products/
         [Authorize(Roles = "Admin")]
-        [HttpPost("")]
+        [HttpPost()]
         public async Task<IActionResult> Create([FromForm] CreateProductDTO createRequest, IFormFile? photoFile)
         {
             if (!ModelState.IsValid)
