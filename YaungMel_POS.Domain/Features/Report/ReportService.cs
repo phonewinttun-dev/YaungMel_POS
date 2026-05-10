@@ -102,12 +102,10 @@ namespace YaungMel_POS.Domain.Features.Report
                     margin-top: 5px;
                 }
                 .data-table th {
-                    border-top: 1px solid #000;
-                    border-bottom: 1px solid #000;
+                    border: 1px solid #444;
                     padding: 6px 4px;
                     font-size: 9pt;
                     font-weight: bold;
-                    text-align: left;
                     text-transform: uppercase;
                     background-color: #f9f9f9;
                 }
@@ -115,33 +113,34 @@ namespace YaungMel_POS.Domain.Features.Report
                     padding: 5px 4px;
                     font-size: 9pt;
                     vertical-align: top;
-                    border-bottom: 1px solid #eee;
+                    border: 1px solid #eee;
                 }
                 .voucher-section {
-                    margin-bottom: 15px;
+                    margin-bottom: 25px;
                     page-break-inside: avoid;
                 }
                 .voucher-header {
                     font-weight: bold;
-                    background-color: #eee;
-                    padding: 4px 8px;
-                    font-size: 8pt;
-                    margin-top: 10px;
-                    border-left: 3px solid #333;
+                    background-color: #333;
+                    color: white;
+                    padding: 6px 10px;
+                    font-size: 9pt;
+                    margin-top: 15px;
+                    border-radius: 4px 4px 0 0;
                 }
                 .col-doc { width: 120px; }
-                .col-desc { width: auto; }
-                .col-qty { width: 50px; text-align: center; }
-                .col-price { width: 90px; text-align: right; }
-                .col-total { width: 100px; text-align: right; }
+                .col-date { width: 100px; text-align: center; }
+                .col-desc { width: auto; text-align: left; }
+                .col-qty { width: 60px; text-align: center; }
+                .col-price { width: 100px; text-align: right; }
+                .col-total { width: 110px; text-align: right; }
                 
                 .text-right { text-align: right; }
                 .text-center { text-align: center; }
                 .bold { font-weight: bold; }
                 
                 .total-row td {
-                    border-top: 2px solid #000;
-                    border-bottom: 2px solid #000;
+                    border: 1px solid #444;
                     font-weight: bold;
                     font-size: 10pt;
                     padding: 8px 4px;
@@ -149,9 +148,9 @@ namespace YaungMel_POS.Domain.Features.Report
                 }
                 .summary-box {
                     margin-top: 30px;
-                    padding: 10px;
-                    border: 1px solid #ccc;
-                    width: 300px;
+                    padding: 15px;
+                    border: 2px solid #333;
+                    width: 320px;
                     float: right;
                     background-color: #fafafa;
                 }
@@ -282,7 +281,7 @@ namespace YaungMel_POS.Domain.Features.Report
             <table class='data-table'>
                 <thead>
                     <tr>
-                        <th style='width: 100px;'>DATE</th>
+                        <th class='col-date'>DATE</th>
                         <th class='col-desc'>TOP SELLING PRODUCT</th>
                         <th class='col-qty'>SALES</th>
                         <th class='col-total'>TOTAL AMOUNT</th>
@@ -296,7 +295,7 @@ namespace YaungMel_POS.Domain.Features.Report
             foreach (var summary in summaries.OrderBy(s => s.Date))
             {
                 sb.Append("<tr>");
-                sb.Append($"<td>{summary.Date:dd/MM/yyyy}</td>");
+                sb.Append($"<td class='col-date'>{summary.Date:dd/MM/yyyy}</td>");
                 sb.Append($"<td class='col-desc'>{summary.TopSaleProductName ?? "N/A"}</td>");
                 sb.Append($"<td class='col-qty'>{summary.TotalSale}</td>");
                 sb.Append($"<td class='col-total'>{summary.TotalAmount:N0}</td>");
