@@ -2,12 +2,12 @@
 
 ## Migration commands
 
-Run this in POSSampleOWN\POSSampleOWN.csproj:
+Run this in YaungMel_POS\YaungMel_POS.WebApi.csproj:
 
 Migration script:
 
 ```cmd
-dotnet ef migrations add InitialCreate --project YaungMel_POS.Database --startup-project YaungMel_POS.WebApi   
+dotnet ef migrations add InitialCreate --project YaungMel_POS.Database --startup-project YaungMel_POS.WebApi
 ```
 
 ```cmd
@@ -50,4 +50,9 @@ To check if docker is running:
 
 ```cmd
 docker compose ps
+```
+
+Database drop command (run this only when needed): 
+```cmd
+dotnet ef database drop --project YaungMel_POS.Database --startup-project YaungMel_POS.WebApi
 ```
