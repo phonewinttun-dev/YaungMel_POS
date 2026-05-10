@@ -99,12 +99,12 @@ export default function ProductsPage() {
         const res = photoFile
           ? await (() => {
               const payload = new FormData();
-              payload.append("name", form.name);
-              payload.append("description", form.description || "");
-              payload.append("price", Number(form.price).toString());
-              payload.append("stockQuantity", Number(form.stockQuantity).toString());
-              payload.append("categoryId", Number(form.categoryId).toString());
-              payload.append("version", String(editProduct.version ?? 0));
+              payload.append("Name", form.name);
+              payload.append("Description", form.description || "");
+              payload.append("Price", Number(form.price).toString());
+              payload.append("StockQuantity", Number(form.stockQuantity).toString());
+              payload.append("CategoryId", Number(form.categoryId).toString());
+              payload.append("Version", String(editProduct.version ?? 0));
               payload.append("photoFile", photoFile);
               return productsApi.updateWithPhoto(editProduct.id, payload);
             })()
@@ -115,11 +115,11 @@ export default function ProductsPage() {
         let res;
         if (photoFile) {
           const payload = new FormData();
-          payload.append("name", form.name);
-          payload.append("description", form.description || "");
-          payload.append("price", Number(form.price).toString());
-          payload.append("stockQuantity", (Number(form.stockQuantity) || 0).toString());
-          payload.append("categoryId", Number(form.categoryId).toString());
+          payload.append("Name", form.name);
+          payload.append("Description", form.description || "");
+          payload.append("Price", Number(form.price).toString());
+          payload.append("StockQuantity", (Number(form.stockQuantity) || 0).toString());
+          payload.append("CategoryId", Number(form.categoryId).toString());
           payload.append("photoFile", photoFile);
           res = await productsApi.createWithPhoto(payload);
         } else {

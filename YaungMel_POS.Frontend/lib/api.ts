@@ -139,50 +139,40 @@ export const productsApi = {
 
   create: (data: CreateProductDTO | FormData) => {
     if (data instanceof FormData) {
-      return api.post<ApiResponse<ProductDTO>>("/api/products", data, {
-        headers: { "Content-Type": "multipart/form-data" },
-      }).then(unwrap);
+      return api.post<ApiResponse<ProductDTO>>("/api/products", data).then(unwrap);
     }
     const payload = new FormData();
-    payload.append("name", data.name);
-    if (data.description) payload.append("description", data.description);
-    payload.append("price", String(data.price));
-    payload.append("stockQuantity", String(data.stockQuantity));
-    payload.append("categoryId", String(data.categoryId));
-    return api.post<ApiResponse<ProductDTO>>("/api/products", payload, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }).then(unwrap);
+    payload.append("Name", data.name);
+    if (data.description) payload.append("Description", data.description);
+    payload.append("Price", String(data.price));
+    payload.append("StockQuantity", String(data.stockQuantity));
+    payload.append("CategoryId", String(data.categoryId));
+    return api.post<ApiResponse<ProductDTO>>("/api/products", payload).then(unwrap);
   },
 
   createWithPhoto: (data: FormData) =>
-    api.post<ApiResponse<ProductDTO>>("/api/products", data, {
-      headers: { "Content-Type": "multipart/form-data" },
-    }).then(unwrap),
+    api.post<ApiResponse<ProductDTO>>("/api/products", data).then(unwrap),
 
   bulkCreate: (data: CreateProductDTO[]) =>
     api.post<ApiResponse<ProductDTO[]>>("/api/products/bulk", data).then(unwrap),
 
   update: (id: number, data: UpdateProductDTO) => {
     const payload = new FormData();
-    if (data.name !== undefined) payload.append("name", data.name);
-    if (data.description !== undefined) payload.append("description", data.description);
-    if (data.price !== undefined) payload.append("price", String(data.price));
-    if (data.stockQuantity !== undefined) payload.append("stockQuantity", String(data.stockQuantity));
-    if (data.categoryId !== undefined) payload.append("categoryId", String(data.categoryId));
-    if (data.version !== undefined) payload.append("version", String(data.version));
+    if (data.name !== undefined) payload.append("Name", data.name);
+    if (data.description !== undefined) payload.append("Description", data.description);
+    if (data.price !== undefined) payload.append("Price", String(data.price));
+    if (data.stockQuantity !== undefined) payload.append("StockQuantity", String(data.stockQuantity));
+    if (data.categoryId !== undefined) payload.append("CategoryId", String(data.categoryId));
+    if (data.version !== undefined) payload.append("Version", String(data.version));
 
     return api
-      .patch<ApiResponse<ProductDTO>>(`/api/products/${id}`, payload, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
+      .patch<ApiResponse<ProductDTO>>(`/api/products/${id}`, payload)
       .then(unwrap);
   },
 
   updateWithPhoto: (id: number, data: FormData) =>
     api
-      .patch<ApiResponse<ProductDTO>>(`/api/products/${id}`, data, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
+      .patch<ApiResponse<ProductDTO>>(`/api/products/${id}`, data)
       .then(unwrap),
 
   delete: (id: number) =>
