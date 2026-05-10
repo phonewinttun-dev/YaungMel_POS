@@ -21,28 +21,52 @@ namespace YaungMel_POS.Domain.Features.Report
 
         // GET : api/reports
         [HttpGet]
-        public async Task<IActionResult> GenerateDetailedDailyReport([FromQuery] DateTime date)
+        public async Task<IActionResult> GenerateDetailedDailyReport([FromQuery] string date)
         {
-            var result = await _reportService.GenerateDetailedDailyPdfAsync(date);
-            if (result == null || result.Length == 0)
+            if (!DateTime.TryParse(date, out var parsedDate))
             {
-                return NotFound();
+                return BadRequest(new { isSuccess = false, message = "Invalid date format. Please use YYYY-MM-DD." });
             }
 
-            return File(result, "application/pdf", $"Daily_Report_{date:yyyy-MM-dd}.pdf");
+            try
+            {
+                var result = await _reportService.GenerateDetailedDailyPdfAsync(parsedDate);
+                if (result == null || result.Length == 0)
+                {
+                    return NotFound(new { isSuccess = false, message = "Report data not found for the specified date." });
+                }
+
+                return File(result, "application/pdf", $"Daily_Report_{parsedDate:yyyy-MM-dd}.pdf");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { isSuccess = false, message = ex.Message });
+            }
         }
 
         // GET : api/reports/range
         [HttpGet("range")]
-        public async Task<IActionResult> GenerateDetailedRangeReport([FromQuery] DateTime startDate, [FromQuery] DateTime endDate)
+        public async Task<IActionResult> GenerateDetailedRangeReport([FromQuery] string startDate, [FromQuery] string endDate)
         {
-            var result = await _reportService.GenerateDetailedRangePdfAsync(startDate, endDate);
-            if (result == null || result.Length == 0)
+            if (!DateTime.TryParse(startDate, out var parsedStart) || !DateTime.TryParse(endDate, out var parsedEnd))
             {
-                return NotFound();
+                return BadRequest(new { isSuccess = false, message = "Invalid date range format. Please use YYYY-MM-DD." });
             }
 
-            return File(result, "application/pdf", $"Range_Report_{startDate:yyyy-MM-dd}_to_{endDate:yyyy-MM-dd}.pdf");
+            try
+            {
+                var result = await _reportService.GenerateDetailedRangePdfAsync(parsedStart, parsedEnd);
+                if (result == null || result.Length == 0)
+                {
+                    return NotFound(new { isSuccess = false, message = "Report data not found for the specified range." });
+                }
+
+                return File(result, "application/pdf", $"Range_Report_{parsedStart:yyyy-MM-dd}_to_{parsedEnd:yyyy-MM-dd}.pdf");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { isSuccess = false, message = ex.Message });
+            }
         }
     }
 }
