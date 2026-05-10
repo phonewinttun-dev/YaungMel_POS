@@ -185,7 +185,9 @@ export const productsApi = {
 
   updateWithPhoto: (id: number, data: FormData) =>
     api
-      .patch<ApiResponse<ProductDTO>>(`/api/products/${id}`, data)
+      .patch<ApiResponse<ProductDTO>>(`/api/products/${id}`, data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
       .then(unwrap),
 
   delete: (id: number) =>
