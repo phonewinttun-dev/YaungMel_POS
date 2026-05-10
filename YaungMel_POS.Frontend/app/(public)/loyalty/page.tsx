@@ -418,22 +418,10 @@ export default function LoyaltyPage() {
                 <h3 className="text-2xl font-bold text-[var(--text-primary)]">Reward Claimed!</h3>
                 <p className="text-sm text-[var(--text-secondary)] mt-2">The reward has been successfully claimed for the customer.</p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-lg mx-auto">
-                <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-primary)]">
+              <div className="flex justify-center max-w-sm mx-auto">
+                <div className="w-full p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-primary)]">
                   <p className="text-xs text-[var(--text-tertiary)] uppercase">Status</p>
                   <p className="text-lg font-bold text-[var(--accent-success)] mt-1">{claimResult.status || "Success"}</p>
-                </div>
-                <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-primary)]">
-                  <p className="text-xs text-[var(--text-tertiary)] uppercase">Remaining</p>
-                  <p className="text-lg font-bold text-[var(--text-primary)] mt-1">
-                    {claimResult.remainingBalance !== undefined ? `${claimResult.remainingBalance} pts` : "N/A"}
-                  </p>
-                </div>
-                <div className="p-4 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-primary)]">
-                  <p className="text-xs text-[var(--text-tertiary)] uppercase">Redemption ID</p>
-                  <p className="text-sm font-mono font-bold text-[var(--text-primary)] mt-1 break-all">
-                    {claimResult.redemptionId ? `${claimResult.redemptionId.slice(0, 12)}...` : "N/A"}
-                  </p>
                 </div>
               </div>
               <Button onClick={handleReset} className="mx-auto" icon={<SearchIcon size={16} />}>Claim Another Reward</Button>

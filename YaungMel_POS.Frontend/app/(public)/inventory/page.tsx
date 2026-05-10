@@ -13,6 +13,7 @@ import { SkeletonTable } from "@/components/ui/Skeleton";
 import { AnimatedPage } from "@/components/ui/AnimatedPage";
 import { toast } from "@/components/ui/Toast";
 import { Warehouse, Plus, Minus, DollarSign, AlertTriangle } from "lucide-react";
+import { Pagination } from "@/components/ui/Pagination";
 
 export default function InventoryPage() {
   const { isAdmin } = useAuth();
@@ -24,6 +25,9 @@ export default function InventoryPage() {
   const [quantity, setQuantity] = useState("");
   const [newPrice, setNewPrice] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 15;
 
   const loadProducts = useCallback(async () => {
     setIsLoading(true);
@@ -37,6 +41,12 @@ export default function InventoryPage() {
   useEffect(() => { void loadProducts(); }, [loadProducts]);
 
   const filtered = showLowOnly ? products.filter((p) => p.stockQuantity <= 5) : products;
+  const totalPages = Math.ceil(filtered.length / pageSize);
+  const paginated = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [showLowOnly]);
 
   const handleAdjust = async () => {
     if (!adjustModal || !quantity || Number(quantity) <= 0) { toast("error", "Enter valid quantity"); return; }
@@ -97,7 +107,7 @@ export default function InventoryPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((p) => (
+                  {paginated.map((p) => (
                     <tr key={p.id} className="border-b border-[var(--border-primary)] last:border-0 hover:bg-[var(--bg-hover)] transition-colors">
                       <td className="py-3 px-4 text-sm font-medium text-[var(--text-primary)]">{p.name}</td>
                       <td className="py-3 px-4 text-sm font-mono text-[var(--text-primary)]">{p.priceFormatted} MMK</td>
@@ -119,6 +129,14 @@ export default function InventoryPage() {
             </div>
           )}
         </Card>
+
+        {filtered.length > pageSize && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        )}
 
         <Modal isOpen={!!adjustModal} onClose={() => setAdjustModal(null)} title={`${adjustModal?.type === "increase" ? "Increase" : "Decrease"} Stock — ${adjustModal?.product.name}`} size="sm">
           <div className="space-y-4">

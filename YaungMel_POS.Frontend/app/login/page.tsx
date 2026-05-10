@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
 import { toast } from "@/components/ui/Toast";
 import { motion } from "framer-motion";
-import { Phone, Lock, ShoppingBag, ArrowRight } from "lucide-react";
-import Link from "next/link";
+import { Phone, Lock, ArrowRight } from "lucide-react";
+import { Logo } from "@/components/ui/Logo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -109,12 +109,12 @@ export default function LoginPage() {
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
-              className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center mb-4 shadow-lg"
+              className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 shadow-lg"
             >
-              <ShoppingBag className="text-white" size={28} />
+              <Logo className="w-full h-full p-1" />
             </motion.div>
             <h1 className="text-2xl font-bold text-[var(--text-primary)]">
-              MiniPOS
+              Yaung Mel
             </h1>
             <p className="text-sm text-[var(--text-secondary)] mt-1">
               Sign in to your dashboard
@@ -171,7 +171,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-xs text-[var(--text-tertiary)] mt-6">
-          MiniPOS v2.0 — Point of Sale System
+          Yaung Mel v2.0 — Point of Sale System
         </p>
       </motion.div>
     </div>

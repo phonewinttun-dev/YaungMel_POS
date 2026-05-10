@@ -1,4 +1,4 @@
-# Mini POS
+# Yaung Mel POS System
 
 ## Migration commands
 

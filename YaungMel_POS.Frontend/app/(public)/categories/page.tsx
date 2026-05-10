@@ -12,6 +12,7 @@ import { AnimatedPage } from "@/components/ui/AnimatedPage";
 import { toast } from "@/components/ui/Toast";
 import { useAuth } from "@/lib/auth-context";
 import { Plus, Search, Edit2, Trash2, Tags, FolderOpen } from "lucide-react";
+import { Pagination } from "@/components/ui/Pagination";
 
 export default function CategoriesPage() {
   const { isAdmin } = useAuth();
@@ -23,6 +24,9 @@ export default function CategoriesPage() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [form, setForm] = useState({ name: "", description: "" });
   const [formLoading, setFormLoading] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 9;
 
   const loadCategories = useCallback(async () => {
     setIsLoading(true);
@@ -36,6 +40,12 @@ export default function CategoriesPage() {
   useEffect(() => { void loadCategories(); }, [loadCategories]);
 
   const filtered = categories.filter((c) => !searchTerm || c.name.toLowerCase().includes(searchTerm.toLowerCase()));
+  const totalPages = Math.ceil(filtered.length / pageSize);
+  const paginated = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm]);
 
   const openCreate = () => { setForm({ name: "", description: "" }); setEditCat(null); setShowModal(true); };
   const openEdit = (c: CategoryDTO) => { setForm({ name: c.name, description: c.description || "" }); setEditCat(c); setShowModal(true); };
@@ -93,27 +103,36 @@ export default function CategoriesPage() {
             <p className="text-[var(--text-secondary)]">No categories found</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map((c, i) => (
-              <Card key={c.id} hover>
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradients[i % gradients.length]} flex items-center justify-center shadow-md`}>
-                      <Tags size={20} className="text-white" />
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {paginated.map((c, i) => (
+                <Card key={c.id} hover>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-xl bg-gradient-to-br ${gradients[i % gradients.length]} flex items-center justify-center shadow-md`}>
+                        <Tags size={20} className="text-white" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-semibold text-[var(--text-primary)]">{c.name}</h3>
+                        <p className="text-xs text-[var(--text-tertiary)] mt-0.5 line-clamp-1">{c.description || "No description"}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-base font-semibold text-[var(--text-primary)]">{c.name}</h3>
-                      <p className="text-xs text-[var(--text-tertiary)] mt-0.5 line-clamp-1">{c.description || "No description"}</p>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => openEdit(c)} className="p-2 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--accent-primary)] hover:bg-[var(--accent-primary-soft)] transition-colors cursor-pointer"><Edit2 size={15} /></button>
+                      {isAdmin && <button onClick={() => setDeleteId(c.id)} className="p-2 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--accent-danger)] hover:bg-[var(--accent-danger-soft)] transition-colors cursor-pointer"><Trash2 size={15} /></button>}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => openEdit(c)} className="p-2 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--accent-primary)] hover:bg-[var(--accent-primary-soft)] transition-colors cursor-pointer"><Edit2 size={15} /></button>
-                    {isAdmin && <button onClick={() => setDeleteId(c.id)} className="p-2 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--accent-danger)] hover:bg-[var(--accent-danger-soft)] transition-colors cursor-pointer"><Trash2 size={15} /></button>}
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
+                </Card>
+              ))}
+            </div>
+            {filtered.length > pageSize && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            )}
+          </>
         )}
 
         <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editCat ? "Edit Category" : "New Category"} size="sm">

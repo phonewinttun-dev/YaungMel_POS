@@ -10,7 +10,6 @@ import {
   Package,
   Receipt,
   Search,
-  ShoppingBag,
   ShoppingCart,
   Star,
   Tags,
@@ -23,6 +22,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { Logo } from "@/components/ui/Logo";
 
 interface NavItem {
   label: string;
@@ -168,9 +168,7 @@ export function Sidebar({
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b border-[var(--border-primary)]">
-        <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center shadow-lg shrink-0">
-          <ShoppingBag className="text-white" size={22} />
-        </div>
+        <Logo className="w-10 h-10 shrink-0" />
         <AnimatePresence>
           {!collapsed && (
             <motion.div
@@ -180,7 +178,7 @@ export function Sidebar({
               className="overflow-hidden whitespace-nowrap"
             >
               <h1 className="text-lg font-bold text-[var(--text-primary)]">
-                YaungMel
+                Yaung Mel
               </h1>
               <p className="text-[10px] text-[var(--text-tertiary)] -mt-0.5">
                 Premium POS System

@@ -12,6 +12,7 @@ import { Modal } from "@/components/ui/Modal";
 import { AnimatedPage } from "@/components/ui/AnimatedPage";
 import { toast } from "@/components/ui/Toast";
 import { Search, Plus, Minus, ShoppingCart, CheckCircle, X, Gift, UserCheck } from "lucide-react";
+import { Pagination } from "@/components/ui/Pagination";
 
 export default function POSPage() {
 
@@ -29,6 +30,9 @@ export default function POSPage() {
   const [externalId, setExternalId] = useState("");
   const [pointLoading, setPointLoading] = useState(false);
   const [pointsAwarded, setPointsAwarded] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 12;
 
   const loadProducts = useCallback(async () => {
     setIsLoading(true);
@@ -49,6 +53,13 @@ export default function POSPage() {
     const matchCat = !filterCat || p.categoryId === filterCat;
     return matchSearch && matchCat;
   });
+
+  const totalPages = Math.ceil(filtered.length / pageSize);
+  const paginated = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterCat]);
 
   const addToCart = (product: ProductDTO) => {
     setCart((prev) => {
@@ -139,7 +150,7 @@ export default function POSPage() {
           <div className="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 content-start">
             {isLoading ? Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="h-32 rounded-2xl bg-[var(--bg-tertiary)] animate-[shimmer_1.5s_infinite] bg-[length:200%_100%] bg-gradient-to-r from-[var(--bg-tertiary)] via-[var(--bg-hover)] to-[var(--bg-tertiary)]" />
-            )) : filtered.map((p) => {
+            )) : paginated.map((p) => {
               const inCart = cart.find((c) => c.product.id === p.id);
 	              return (
 	                <button key={p.id} onClick={() => addToCart(p)} className={`text-left p-4 rounded-2xl border transition-all duration-200 hover:shadow-md cursor-pointer ${inCart ? "bg-[var(--accent-primary-soft)] border-[var(--accent-primary)]" : "bg-[var(--bg-card)] border-[var(--border-primary)] hover:border-[var(--border-secondary)]"}`}>
@@ -163,6 +174,16 @@ export default function POSPage() {
               );
             })}
           </div>
+
+          {filtered.length > pageSize && (
+            <div className="py-2">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          )}
         </div>
 
         {/* Cart Panel */}

@@ -13,6 +13,7 @@ import { AnimatedPage } from "@/components/ui/AnimatedPage";
 import { toast } from "@/components/ui/Toast";
 import { useAuth } from "@/lib/auth-context";
 import { Plus, Search, Edit2, Trash2, Package, Filter, Upload } from "lucide-react";
+import { Pagination } from "@/components/ui/Pagination";
 
 export default function ProductsPage() {
   const { isAdmin } = useAuth();
@@ -27,6 +28,9 @@ export default function ProductsPage() {
   const [form, setForm] = useState({ name: "", description: "", price: "", stockQuantity: "", categoryId: "" });
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [formLoading, setFormLoading] = useState(false);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
   const loadData = useCallback(async () => {
     setIsLoading(true);
@@ -47,6 +51,13 @@ export default function ProductsPage() {
     const matchesCategory = !filterCategory || p.categoryId === filterCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const totalPages = Math.ceil(filtered.length / pageSize);
+  const paginated = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filterCategory]);
 
   const openCreate = () => {
     setForm({ name: "", description: "", price: "", stockQuantity: "", categoryId: categories[0]?.id?.toString() || "" });
@@ -176,7 +187,7 @@ export default function ProductsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((p) => (
+                  {paginated.map((p) => (
                     <tr key={p.id} className="border-b border-[var(--border-primary)] last:border-0 hover:bg-[var(--bg-hover)] transition-colors">
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
@@ -213,6 +224,14 @@ export default function ProductsPage() {
             </div>
           )}
         </Card>
+
+        {filtered.length > pageSize && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        )}
 
         <Modal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} title={editProduct ? "Edit Product" : "New Product"} size="md">
           <div className="space-y-4">

@@ -1,4 +1,4 @@
-## **Mini POS ( C\# Project by Technortal )**
+## **Yaung Mel ( C# Project )**
 
 Participants: Thein Htet Aung, Bhone Myint Maung, Ye Myat Thu, Phone Wint Tun.
 
