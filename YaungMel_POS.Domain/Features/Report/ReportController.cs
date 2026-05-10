@@ -10,7 +10,7 @@ namespace YaungMel_POS.Domain.Features.Report
 {
     [ApiController]
     [Route("api/reports")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin, Staff")]
     public class ReportController : ControllerBase
     {
         private readonly IReportService _reportService;
