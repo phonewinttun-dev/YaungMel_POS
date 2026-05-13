@@ -37,17 +37,13 @@ namespace YaungMel_POS.Domain.Features.Sale
 
         // GET: api/sales/paged?pageNo=1&pageSize=10
         [HttpGet("paged")]
-        public async Task<IActionResult> GetSalesPaged([FromQuery] int pageNo = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> Get([FromQuery] PaginationRequest request)
         {
-            if (pageNo <= 0 || pageSize <= 0)
-            {
-                return BadRequest("Page number and page size must be greater than zero.");
-            }
-            var result = await _service.GetSalesAsync(pageNo, pageSize);
-
+            var result = await _service.GetSalesAsync(request);
             if (!result.IsSuccess)  return BadRequest(result);
             return Ok(result);
         }
+        
         // GET: api/sales/{voucherCode}
         [HttpGet("{voucherCode}")]
         public async Task<IActionResult> GetByVoucherCode(string voucherCode)
@@ -63,19 +59,21 @@ namespace YaungMel_POS.Domain.Features.Sale
             try
             {
                 if (!ModelState.IsValid)
-                    return BadRequest(PagedResult<object>.SystemError("Invalid sale data."));
+                {
+                    return BadRequest(ModelState);
+                }
 
                 var result = await _service.CreateSaleAsync(createRequest, GetCurrentUserId());
 
-                if (!result.IsSuccess)
+                if (!result.IsSuccess || result.Data == null)
                 {
                     return BadRequest(result);
                 }
 
-                if (result.Data == null)
-                {
-                    return BadRequest(PagedResult<object>.SystemError("Sale created but no data returned."));
-                }
+                //if (result.Data == null)
+                //{
+                //    return BadRequest();
+                //}
 
                 return CreatedAtAction(
                     nameof(GetByVoucherCode),
@@ -84,7 +82,7 @@ namespace YaungMel_POS.Domain.Features.Sale
             }
             catch (Exception ex)
             {
-                return StatusCode(500, PagedResult<object>.SystemError($"Internal Server Error: {ex.Message}"));
+                return StatusCode(500, Result<object>.SystemError($"Internal Server Error: {ex.Message}"));
             }
         }
     }

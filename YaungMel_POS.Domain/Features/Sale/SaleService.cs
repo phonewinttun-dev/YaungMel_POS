@@ -21,16 +21,16 @@ public class SaleService : ISaleService
         _auditService = auditService;
     }
 
-    private IQueryable<Tbl_Product> ActiveProduct => _db.Products.Where(p => !p.DeleteFlag);
+    //private IQueryable<Tbl_Product> ActiveProduct => _db.Products.Where(p => !p.DeleteFlag);
 
     #region Create Sale
-    public async Task<PagedResult<SaleDTO>> CreateSaleAsync(CreateSaleDTO reqSale, int userId)
+    public async Task<Result<SaleDTO>> CreateSaleAsync(CreateSaleDTO reqSale, int userId)
     {
         if (!ValidateSale(reqSale))
-            return PagedResult<SaleDTO>.SystemError("Invalid sale data.");
+            return Result<SaleDTO>.SystemError("Invalid sale data.");
 
         if (reqSale.Items == null || !reqSale.Items.Any())
-            return PagedResult<SaleDTO>.SystemError("Sale must contain at least one item.");
+            return Result<SaleDTO>.SystemError("Sale must contain at least one item.");
 
         // Move transaction inside try to handle provider-specific errors (like InMemory DB not supporting transactions)
         Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction? transaction = null;
@@ -52,10 +52,10 @@ public class SaleService : ISaleService
             foreach (var item in reqSale.Items)
             {
                 if (!products.TryGetValue(item.ProductId, out var product))
-                    return PagedResult<SaleDTO>.SystemError($"Product with ID: {item.ProductId} not found.");
+                    return Result<SaleDTO>.SystemError($"Product with ID: {item.ProductId} not found.");
 
                 if (product.StockQuantity < item.Quantity)
-                    return PagedResult<SaleDTO>.SystemError($"Insufficient stock for {product.Name}. Available: {product.StockQuantity}");
+                    return Result<SaleDTO>.SystemError($"Insufficient stock for {product.Name}. Available: {product.StockQuantity}");
             }
 
             decimal totalPrice = TotalPrice(reqSale, products);
@@ -124,7 +124,7 @@ public class SaleService : ISaleService
                 }).ToList()
             };
 
-            return PagedResult<SaleDTO>.Success(resModel);
+            return Result<SaleDTO>.Success(resModel);
         }
         catch (Exception ex)
         {
@@ -132,7 +132,7 @@ public class SaleService : ISaleService
             {
                 await transaction.RollbackAsync();
             }
-            return PagedResult<SaleDTO>.SystemError($"Error: {ex.Message}");
+            return Result<SaleDTO>.SystemError($"Error: {ex.Message}");
         }
         finally
         {
@@ -145,22 +145,21 @@ public class SaleService : ISaleService
     #endregion
 
     #region Get All Sale Paignation
-    public async Task<PagedResult<SaleListResponseDTO>> GetSalesAsync(int pageNo, int pageSize)
+    public async Task<PagedResult<SaleDTO>> GetSalesAsync(PaginationRequest request)
     {
+        if (request is null)
+        {
+            return PagedResult<SaleDTO>.ValidationError("Request cannot be null!");
+        }
         try
         {
-            if (pageSize <= 0) return PagedResult<SaleListResponseDTO>.SystemError("Page size must be greater than 0.");
-
             var totalItems = await _db.Sales.CountAsync();
-
-            var pageCount = totalItems / pageSize;
-            if(totalItems % pageSize > 0) pageCount++;
 
             var sales = await _db.Sales
                 .AsNoTracking()
                 .OrderByDescending(s => s.Id)
-                .Skip((pageNo - 1) * pageSize)
-                .Take(pageSize)
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
                 .Select(sale => new SaleDTO
                 {
                     Id = sale.Id,
@@ -177,23 +176,19 @@ public class SaleService : ISaleService
                 })
                 .ToListAsync();
 
-            var result = new SaleListResponseDTO
-            {
-                Items = sales,
-                PageSetting = new PageSettingDTO(pageNo, pageSize, pageCount)
-            };
+            var pagination = new Pagination(request.PageNumber, request.PageSize, totalItems);
 
-            return PagedResult<SaleListResponseDTO>.Success(result);
+            return PagedResult<SaleDTO>.Success(sales, pagination);
         }
         catch (Exception ex)
         {
-            return PagedResult<SaleListResponseDTO>.SystemError($"Error: {ex.Message}");
+            return PagedResult<SaleDTO>.SystemError($"Error: {ex.Message}");
         }
     }
     #endregion
 
     #region Get Sale By Voucher code
-    public async Task<PagedResult<SaleDTO>> GetSaleByVoucherCodeAsync(string voucherCode)
+    public async Task<Result<SaleDTO>> GetSaleByVoucherCodeAsync(string voucherCode)
     {
         try
         {
@@ -204,8 +199,10 @@ public class SaleService : ISaleService
                .FirstOrDefaultAsync(s => s.VoucherCode == voucherCode);
 
             if (sale is null)
-                return PagedResult<SaleDTO>.NotFound("Sale not found.");
-
+            {
+                return Result<SaleDTO>.NotFound("Sale not found.");
+            }
+            
             var resModel = new SaleDTO
             {
                 Id = sale.Id,
@@ -220,11 +217,11 @@ public class SaleService : ISaleService
                     PriceFormatted = x.Price.ToString("N0")
                 }).ToList()
             };
-            return PagedResult<SaleDTO>.Success(resModel);
+            return Result<SaleDTO>.Success(resModel);
         }
         catch (Exception ex)
         {
-            return PagedResult<SaleDTO>.SystemError(ex.Message);
+            return Result<SaleDTO>.SystemError(ex.Message);
         }
     }
     #endregion
