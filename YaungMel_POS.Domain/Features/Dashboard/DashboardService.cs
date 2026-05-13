@@ -20,12 +20,12 @@ public class DashboardService : IDashboardService
     }
 
     #region [1] Sales Overview
-    public async Task<Result<SalesOverviewDTO>> GetSalesOverviewAsync(DateTime startDate, DateTime endDate)
+    public async Task<PagedResult<SalesOverviewDTO>> GetSalesOverviewAsync(DateTime startDate, DateTime endDate)
     {
         try
         {
             if (startDate > endDate)
-                return Result<SalesOverviewDTO>.SystemError("Start date must be before end date.");
+                return PagedResult<SalesOverviewDTO>.SystemError("Start date must be before end date.");
 
             var overview = await _db.Sales
                 .Where(s => s.CreatedAt >= startDate && s.CreatedAt <= endDate)
@@ -45,17 +45,17 @@ public class DashboardService : IDashboardService
                     EndDate = endDate
                 };
 
-            return Result<SalesOverviewDTO>.Success(overview);
+            return PagedResult<SalesOverviewDTO>.Success(overview);
         }
         catch (Exception ex)
         {
-            return Result<SalesOverviewDTO>.SystemError($"Error: {ex.Message}");
+            return PagedResult<SalesOverviewDTO>.SystemError($"Error: {ex.Message}");
         }
     }
     #endregion
 
     #region [2] Sales Per Period (day, week, month)
-    public async Task<Result<SalesPerPeriodDTO>> GetSalesPerPeriodAsync(string period)
+    public async Task<PagedResult<SalesPerPeriodDTO>> GetSalesPerPeriodAsync(string period)
     {
         try
         {
@@ -63,7 +63,7 @@ public class DashboardService : IDashboardService
             var normalizedPeriod = (period ?? "day").ToLower().Trim();
 
             if (!validPeriods.Contains(normalizedPeriod))
-                return Result<SalesPerPeriodDTO>.SystemError("Invalid period. Use 'day', 'week', or 'month'.");
+                return PagedResult<SalesPerPeriodDTO>.SystemError("Invalid period. Use 'day', 'week', or 'month'.");
 
             List<SalesPeriodGroupDTO> groupedData;
             var salesData = await _db.Sales
@@ -127,17 +127,17 @@ public class DashboardService : IDashboardService
                 Data = groupedData
             };
 
-            return Result<SalesPerPeriodDTO>.Success(result);
+            return PagedResult<SalesPerPeriodDTO>.Success(result);
         }
         catch (Exception ex)
         {
-            return Result<SalesPerPeriodDTO>.SystemError($"Error: {ex.Message}");
+            return PagedResult<SalesPerPeriodDTO>.SystemError($"Error: {ex.Message}");
         }
     }
     #endregion
 
     #region [3] Sales Report (1month, 3months, 6months, 9months, 1year)
-    public async Task<Result<SalesReportDTO>> GetSalesReportAsync(string range)
+    public async Task<PagedResult<SalesReportDTO>> GetSalesReportAsync(string range)
     {
         try
         {
@@ -153,7 +153,7 @@ public class DashboardService : IDashboardService
             var normalizedRange = range.ToLower().Trim();
 
             if (!validRanges.TryGetValue(normalizedRange, out int monthsBack))
-                return Result<SalesReportDTO>.SystemError("Invalid range. Use '1month', '3months', '6months', '9months', or '1year'.");
+                return PagedResult<SalesReportDTO>.SystemError("Invalid range. Use '1month', '3months', '6months', '9months', or '1year'.");
 
             var endDate = DateTime.UtcNow;
             var startDate = endDate.AddMonths(-monthsBack);
@@ -194,22 +194,22 @@ public class DashboardService : IDashboardService
                 }).ToList()
             };
 
-            return Result<SalesReportDTO>.Success(result);
+            return PagedResult<SalesReportDTO>.Success(result);
         }
         catch (Exception ex)
         {
-            return Result<SalesReportDTO>.SystemError($"Error: {ex.Message}");
+            return PagedResult<SalesReportDTO>.SystemError($"Error: {ex.Message}");
         }
     }
     #endregion
 
     #region [4] Top Products
-    public async Task<Result<List<TopProductDTO>>> GetTopProductsAsync(int top = 10)
+    public async Task<PagedResult<List<TopProductDTO>>> GetTopProductsAsync(int top = 10)
     {
         try
         {
             if (top <= 0)
-                return Result<List<TopProductDTO>>.SystemError("Top count must be greater than 0.");
+                return PagedResult<List<TopProductDTO>>.SystemError("Top count must be greater than 0.");
 
             var topProducts = await _db.SaleItems
                 .GroupBy(si => new { si.ProductId, si.Product.Name })
@@ -224,11 +224,11 @@ public class DashboardService : IDashboardService
                 .Take(top)
                 .ToListAsync();
 
-            return Result<List<TopProductDTO>>.Success(topProducts);
+            return PagedResult<List<TopProductDTO>>.Success(topProducts);
         }
         catch (Exception ex)
         {
-            return Result<List<TopProductDTO>>.SystemError($"Error: {ex.Message}");
+            return PagedResult<List<TopProductDTO>>.SystemError($"Error: {ex.Message}");
         }
     }
     #endregion

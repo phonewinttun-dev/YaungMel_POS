@@ -10,11 +10,9 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
 {
     public interface IProductService
     {
-        Task<Result<ProductListResponseDTO>> GetAsync(int pageNo, int pageSize);
-
+        Task<PagedResult<ProductDTO>> GetAsync(PaginationRequest request);
         Task<Result<ProductDTO>> GetByIdAsync(int id);
         Task<Result<ProductDTO>> CreateAsync(CreateProductDTO request, Stream? photoStream, string fileName, int userId);
-        Task<Result<List<ProductDTO>>> BulkCreateAsync(List<CreateProductDTO> request, int userId);
         Task<Result<ProductDTO>> UpdateAsync(int id, UpdateProductDTO request, Stream? photoStream, string fileName, int userId);
         Task<Result<bool>> DeleteAsync(int id, uint version, int userId);
     }

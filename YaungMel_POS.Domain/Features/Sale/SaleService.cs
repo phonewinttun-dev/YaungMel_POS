@@ -24,13 +24,13 @@ public class SaleService : ISaleService
     private IQueryable<Tbl_Product> ActiveProduct => _db.Products.Where(p => !p.DeleteFlag);
 
     #region Create Sale
-    public async Task<Result<SaleDTO>> CreateSaleAsync(CreateSaleDTO reqSale, int userId)
+    public async Task<PagedResult<SaleDTO>> CreateSaleAsync(CreateSaleDTO reqSale, int userId)
     {
         if (!ValidateSale(reqSale))
-            return Result<SaleDTO>.SystemError("Invalid sale data.");
+            return PagedResult<SaleDTO>.SystemError("Invalid sale data.");
 
         if (reqSale.Items == null || !reqSale.Items.Any())
-            return Result<SaleDTO>.SystemError("Sale must contain at least one item.");
+            return PagedResult<SaleDTO>.SystemError("Sale must contain at least one item.");
 
         // Move transaction inside try to handle provider-specific errors (like InMemory DB not supporting transactions)
         Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction? transaction = null;
@@ -52,10 +52,10 @@ public class SaleService : ISaleService
             foreach (var item in reqSale.Items)
             {
                 if (!products.TryGetValue(item.ProductId, out var product))
-                    return Result<SaleDTO>.SystemError($"Product with ID: {item.ProductId} not found.");
+                    return PagedResult<SaleDTO>.SystemError($"Product with ID: {item.ProductId} not found.");
 
                 if (product.StockQuantity < item.Quantity)
-                    return Result<SaleDTO>.SystemError($"Insufficient stock for {product.Name}. Available: {product.StockQuantity}");
+                    return PagedResult<SaleDTO>.SystemError($"Insufficient stock for {product.Name}. Available: {product.StockQuantity}");
             }
 
             decimal totalPrice = TotalPrice(reqSale, products);
@@ -124,7 +124,7 @@ public class SaleService : ISaleService
                 }).ToList()
             };
 
-            return Result<SaleDTO>.Success(resModel);
+            return PagedResult<SaleDTO>.Success(resModel);
         }
         catch (Exception ex)
         {
@@ -132,7 +132,7 @@ public class SaleService : ISaleService
             {
                 await transaction.RollbackAsync();
             }
-            return Result<SaleDTO>.SystemError($"Error: {ex.Message}");
+            return PagedResult<SaleDTO>.SystemError($"Error: {ex.Message}");
         }
         finally
         {
@@ -145,11 +145,11 @@ public class SaleService : ISaleService
     #endregion
 
     #region Get All Sale Paignation
-    public async Task<Result<SaleListResponseDTO>> GetSalesAsync(int pageNo, int pageSize)
+    public async Task<PagedResult<SaleListResponseDTO>> GetSalesAsync(int pageNo, int pageSize)
     {
         try
         {
-            if (pageSize <= 0) return Result<SaleListResponseDTO>.SystemError("Page size must be greater than 0.");
+            if (pageSize <= 0) return PagedResult<SaleListResponseDTO>.SystemError("Page size must be greater than 0.");
 
             var totalItems = await _db.Sales.CountAsync();
 
@@ -183,17 +183,17 @@ public class SaleService : ISaleService
                 PageSetting = new PageSettingDTO(pageNo, pageSize, pageCount)
             };
 
-            return Result<SaleListResponseDTO>.Success(result);
+            return PagedResult<SaleListResponseDTO>.Success(result);
         }
         catch (Exception ex)
         {
-            return Result<SaleListResponseDTO>.SystemError($"Error: {ex.Message}");
+            return PagedResult<SaleListResponseDTO>.SystemError($"Error: {ex.Message}");
         }
     }
     #endregion
 
     #region Get Sale By Voucher code
-    public async Task<Result<SaleDTO>> GetSaleByVoucherCodeAsync(string voucherCode)
+    public async Task<PagedResult<SaleDTO>> GetSaleByVoucherCodeAsync(string voucherCode)
     {
         try
         {
@@ -204,7 +204,7 @@ public class SaleService : ISaleService
                .FirstOrDefaultAsync(s => s.VoucherCode == voucherCode);
 
             if (sale is null)
-                return Result<SaleDTO>.NotFound("Sale not found.");
+                return PagedResult<SaleDTO>.NotFound("Sale not found.");
 
             var resModel = new SaleDTO
             {
@@ -220,11 +220,11 @@ public class SaleService : ISaleService
                     PriceFormatted = x.Price.ToString("N0")
                 }).ToList()
             };
-            return Result<SaleDTO>.Success(resModel);
+            return PagedResult<SaleDTO>.Success(resModel);
         }
         catch (Exception ex)
         {
-            return Result<SaleDTO>.SystemError(ex.Message);
+            return PagedResult<SaleDTO>.SystemError(ex.Message);
         }
     }
     #endregion

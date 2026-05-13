@@ -22,7 +22,7 @@ public class PointController : ControllerBase
     [HttpPost("accounts")]
     public async Task<IActionResult> CreateAccount([FromBody] CreateAccountReqDTO request)
     {
-        if (!ModelState.IsValid) return BadRequest(Result<object>.SystemError("Invalid request data."));
+        if (!ModelState.IsValid) return BadRequest(PagedResult<object>.SystemError("Invalid request data."));
 
         var result = await _service.CreateAccountAsync(request);
         return Ok(result);
@@ -77,7 +77,7 @@ public class PointController : ControllerBase
     [HttpPost("earn")]
     public async Task<IActionResult> EarnPoints([FromBody] EarnPointReqDTO request)
     {
-        if (!ModelState.IsValid) return BadRequest(Result<object>.SystemError("Invalid request data."));
+        if (!ModelState.IsValid) return BadRequest(PagedResult<object>.SystemError("Invalid request data."));
 
         var result = await _service.EarnPointsAsync(request);
         return Ok(result);
@@ -93,7 +93,7 @@ public class PointController : ControllerBase
     [HttpPost("redemption/claim")]
     public async Task<IActionResult> ClaimReward([FromBody] ClaimRewardReqDTO request)
     {
-        if (!ModelState.IsValid) return BadRequest(Result<object>.SystemError("Invalid request data."));
+        if (!ModelState.IsValid) return BadRequest(PagedResult<object>.SystemError("Invalid request data."));
 
         var result = await _service.ClaimRewardAsync(request);
         return Ok(result);
@@ -132,7 +132,7 @@ public class PointController : ControllerBase
     [HttpPost("rewards")]
     public async Task<IActionResult> CreateReward([FromBody] CreateRewardReqDTO request)
     {
-        if (!ModelState.IsValid) return BadRequest(Result<object>.SystemError("Invalid request data."));
+        if (!ModelState.IsValid) return BadRequest(PagedResult<object>.SystemError("Invalid request data."));
 
         var result = await _service.CreateRewardAsync(request);
         return Ok(result);
@@ -141,7 +141,7 @@ public class PointController : ControllerBase
     [HttpPut("rewards/{id}")]
     public async Task<IActionResult> UpdateReward(string id, [FromBody] UpdateRewardReqDTO request)
     {
-        if (!ModelState.IsValid) return BadRequest(Result<object>.SystemError("Invalid request data."));
+        if (!ModelState.IsValid) return BadRequest(PagedResult<object>.SystemError("Invalid request data."));
 
         var result = await _service.UpdateRewardAsync(id, request);
         return Ok(result);

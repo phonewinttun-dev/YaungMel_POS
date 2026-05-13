@@ -5,9 +5,9 @@ namespace YaungMel_POS.Domain.Features.Summary
 {
     public interface ISummaryService
     {
-        Task<Result<SummaryDTO>> CreateSummaryAsync();
-        Task<Result<SummaryDetailDto>> GetSummaryByDateAsync(DateTime date);
-        Task<Result<SummaryListResponseModel>> GetSummaryByPagination(int pageNo = 1, int pageSize = 10);
-        Task<Result<List<SummaryDTO>>> GetSummaryByDateRangeAsync(DateTime startDate, DateTime endDate);
+        Task<PagedResult<SummaryDTO>> CreateSummaryAsync();
+        Task<PagedResult<SummaryDetailDto>> GetSummaryByDateAsync(DateTime date);
+        Task<PagedResult<SummaryListResponseModel>> GetSummaryByPagination(int pageNo = 1, int pageSize = 10);
+        Task<PagedResult<List<SummaryDTO>>> GetSummaryByDateRangeAsync(DateTime startDate, DateTime endDate);
     }
 }

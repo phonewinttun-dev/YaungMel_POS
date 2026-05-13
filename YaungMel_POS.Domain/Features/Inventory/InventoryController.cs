@@ -28,7 +28,7 @@ namespace YaungMel_POS.Domain.Features.Inventory
         [HttpPatch("increase-stock")]
         public async Task<IActionResult> IncreaseStock([FromBody] StockAdjustmentDTO request)
         {
-            if (!ModelState.IsValid) return BadRequest(Result<object>.SystemError("Invalid request data."));
+            if (!ModelState.IsValid) return BadRequest(PagedResult<object>.SystemError("Invalid request data."));
 
             var result = await _service.IncreaseStockAsync(request.ProductId, request.Quantity, GetCurrentUserId());
 
@@ -38,7 +38,7 @@ namespace YaungMel_POS.Domain.Features.Inventory
         [HttpPatch("reduce-stock")]
         public async Task<IActionResult> ReduceStock([FromBody] StockAdjustmentDTO request)
         {
-            if (!ModelState.IsValid) return BadRequest(Result<object>.SystemError("Invalid request data."));
+            if (!ModelState.IsValid) return BadRequest(PagedResult<object>.SystemError("Invalid request data."));
 
             var result = await _service.DecreaseStockAsync(request.ProductId, request.Quantity, GetCurrentUserId());
 
@@ -55,7 +55,7 @@ namespace YaungMel_POS.Domain.Features.Inventory
         [HttpPatch("{id}")]
         public async Task<IActionResult> UpdatePrice([FromBody] PriceUpdateDTO request)
         {
-            if (!ModelState.IsValid) return BadRequest(Result<object>.SystemError("Invalid request data."));
+            if (!ModelState.IsValid) return BadRequest(PagedResult<object>.SystemError("Invalid request data."));
 
             var result = await _service.UpdatePriceAsync(request.ProductId, request.NewPrice, GetCurrentUserId());
 

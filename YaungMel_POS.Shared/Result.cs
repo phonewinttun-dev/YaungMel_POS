@@ -6,6 +6,7 @@ public enum EnumRespType
 {
     None,
     Success,
+    Failure,
     ValidationError,
     SystemError,
     NotFound
@@ -41,7 +42,7 @@ public class Result<T> : Result
 
     [JsonConstructor]
     public Result(bool isSuccess, string message, EnumRespType type, T? data)
-        : base(isSuccess, message, type)
+    : base(isSuccess, message, type)
     {
         Data = data;
     }
@@ -49,7 +50,9 @@ public class Result<T> : Result
     public static Result<T> Success(T data, string message = "Success")
         => new(true, message, EnumRespType.Success, data);
 
-    public static Result<T> Failure(string message, EnumRespType type = EnumRespType.SystemError)
+    public static Result<T> DeleteSuccess(string message = "Deleted successfully!")
+       => new(true, message, EnumRespType.Success, default);
+    public static Result<T> Failure(string message, EnumRespType type = EnumRespType.Failure)
         => new(false, message, type, default);
 
     public static Result<T> ValidationError(string message, T? data = default)
@@ -60,7 +63,4 @@ public class Result<T> : Result
 
     public static Result<T> NotFound(string message, T? data = default)
         => new(false, message, EnumRespType.NotFound, data);
-
-    public static Result<T> DeleteSuccess(string message = "Deleted successfully!")
-        => new(true, message, EnumRespType.Success, default);
 }

@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
+using YaungMel_POS.Shared;
 
 namespace YaungMel_POS.Domain.DTOs;
 
@@ -61,8 +62,8 @@ public class UpdateProductDTO
     [Required]
     public uint Version { get; set; }
 }
-public class ProductListResponseDTO
-{
-    public List<ProductDTO> Items { get; set; } = null!;
-    public PageSettingDTO PageSetting { get; set; } = null!;
-}
+//public class ProductListResponseDTO
+//{
+//    public List<ProductDTO> Items { get; set; } = null!;
+//    public PaginationRequest PageSetting { get; set; } = null!;
+//}

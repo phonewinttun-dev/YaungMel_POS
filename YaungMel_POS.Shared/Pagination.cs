@@ -41,22 +41,24 @@ public class PagedResult<T> : Result
         Data = data;
         Pagination = pagination;
     }
-
     public static PagedResult<T> Success(List<T> data, Pagination pagination, string message = "Success")
         => new(true, message, EnumRespType.Success, data, pagination);
 
-    public static PagedResult<T> DeleteSuccess(string message = "Deleted successfully!")
-        => new(true, message, EnumRespType.Success, new(), new Pagination(0, 0, 0, 0));
+    public static PagedResult<T> Success(List<T> data, int pageNumber, int pageSize, int totalCount, string message = "Success")
+    {
+        var pagination = new Pagination(pageNumber, pageSize, totalCount);
+        return new(true, message, EnumRespType.Success, data, pagination);
+    }
 
-    public new static PagedResult<T> Failure(string message, EnumRespType type = EnumRespType.SystemError)
-        => new(false, message, type, new(), new Pagination(0, 0, 0, 0));
+    public static PagedResult<T> Failure(string message, List<T>? data, EnumRespType type = EnumRespType.Failure)
+        => new(false, message, type, data ?? new List<T>(), null);
 
-    public static PagedResult<T> ValidationError(string message, List<T>? data = default)
-        => new(false, message, EnumRespType.ValidationError, data ?? new(), new Pagination(0, 0, 0, 0));
+    public static PagedResult<T> SystemError(string message, List<T>? data = null)
+        => new(false, message, EnumRespType.SystemError, data ?? new List<T>(), null);
 
-    public static PagedResult<T> SystemError(string message, List<T>? data = default)
-        => new(false, message, EnumRespType.SystemError, data ?? new(), new Pagination(0, 0, 0, 0));
+    public static PagedResult<T> ValidationError(string message, List<T>? data = null)
+        => new(false, message, EnumRespType.ValidationError, data ?? new List<T>(), null);
 
-    public static PagedResult<T> NotFound(string message, List<T>? data = default)
-        => new(false, message, EnumRespType.NotFound, data ?? new(), new Pagination(0, 0, 0, 0));
+    public static PagedResult<T> NotFound(string message, List<T>? data = null)
+        => new(false, message, EnumRespType.NotFound, data ?? new List<T>(), null);
 }

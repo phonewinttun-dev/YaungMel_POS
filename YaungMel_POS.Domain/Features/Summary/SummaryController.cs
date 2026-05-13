@@ -39,7 +39,7 @@ namespace YaungMel_POS.Domain.Features.Summary
         {
             if (pageNo <= 0 || pageSize <= 0)
             {
-                return BadRequest(Result<object>.SystemError("Page number and page size must be greater than zero."));
+                return BadRequest(PagedResult<object>.SystemError("Page number and page size must be greater than zero."));
             }
 
             var result = await _service.GetSummaryByPagination(pageNo, pageSize);
@@ -56,7 +56,7 @@ namespace YaungMel_POS.Domain.Features.Summary
         {
             if (date == default)
             {
-                return BadRequest(Result<object>.SystemError("Date is required."));
+                return BadRequest(PagedResult<object>.SystemError("Date is required."));
             }
 
             var result = await _service.GetSummaryByDateAsync(date);
@@ -79,7 +79,7 @@ namespace YaungMel_POS.Domain.Features.Summary
         {
             if (startDate == default || endDate == default)
             {
-                return BadRequest(Result<object>.SystemError("Start date and end date are required."));
+                return BadRequest(PagedResult<object>.SystemError("Start date and end date are required."));
             }
 
             var result = await _service.GetSummaryByDateRangeAsync(startDate, endDate);

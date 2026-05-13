@@ -24,11 +24,11 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
         }
 
         #region get categories with pagination
-        public async Task<Result<CategoryListResponseModel>> GetAsync(int pageNo, int pageSize)
+        public async Task<PagedResult<CategoryListResponseModel>> GetAsync(int pageNo, int pageSize)
         {
             try
             {
-                if (pageSize <= 0) return Result<CategoryListResponseModel>.SystemError("Page size must be greater than 0.");
+                if (pageSize <= 0) return PagedResult<CategoryListResponseModel>.SystemError("Page size must be greater than 0.");
                 var totalItems = await _db.Categories
                     .AsNoTracking()
                     .Where(c => !c.DeleteFlag)
@@ -57,17 +57,17 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                     PageSetting = new PageSettingDTO(pageNo, pageSize, pageCount)
                 };
 
-                return Result<CategoryListResponseModel>.Success(result);
+                return PagedResult<CategoryListResponseModel>.Success(result);
             }
             catch (Exception ex)
             {
-                return Result<CategoryListResponseModel>.SystemError($"Error: {ex.Message}");
+                return PagedResult<CategoryListResponseModel>.SystemError($"Error: {ex.Message}");
             }
         }
         #endregion
 
         #region get category by id
-        public async Task<Result<CategoryDTO>> GetByIdAsync(int id)
+        public async Task<PagedResult<CategoryDTO>> GetByIdAsync(int id)
         {
             try
             {
@@ -75,7 +75,7 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                     .AsNoTracking()
                     .FirstOrDefaultAsync(c => c.Id == id && !c.DeleteFlag);
 
-                if (category is null) return Result<CategoryDTO>.NotFound("Category not found.");
+                if (category is null) return PagedResult<CategoryDTO>.NotFound("Category not found.");
 
 
                 var data = new CategoryDTO
@@ -85,24 +85,24 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                     Description = category.Description
                 };
 
-                return Result<CategoryDTO>.Success(data);
+                return PagedResult<CategoryDTO>.Success(data);
             }
             catch (Exception ex)
             {
-                return Result<CategoryDTO>.SystemError(ex.Message);
+                return PagedResult<CategoryDTO>.SystemError(ex.Message);
             }
         }
         #endregion
 
         #region create category
-        public async Task<Result<CategoryDTO>> CreateAsync(CreateCategoryDTO request, int userId)
+        public async Task<PagedResult<CategoryDTO>> CreateAsync(CreateCategoryDTO request, int userId)
         {
             try
             {
                 var duplicateCategory = await _db.Categories
                     .AnyAsync(c => c.Name.ToLower() == request.Name.Trim().ToLower() && !c.DeleteFlag);
 
-                if (duplicateCategory) return Result<CategoryDTO>.SystemError("Category with same name exists.");
+                if (duplicateCategory) return PagedResult<CategoryDTO>.SystemError("Category with same name exists.");
 
                 var newCategory = new Tbl_Category
                 {
@@ -122,23 +122,23 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                     Description = newCategory.Description
                 };
 
-                return Result<CategoryDTO>.Success(data, "Category created successfully.");
+                return PagedResult<CategoryDTO>.Success(data, "Category created successfully.");
             }
             catch (Exception ex)
             {
-                return Result<CategoryDTO>.SystemError(ex.Message);
+                return PagedResult<CategoryDTO>.SystemError(ex.Message);
             }
         }
         #endregion
 
         #region update category
-        public async Task<Result<CategoryDTO>> UpdateAsync(int id, UpdateCategoryDTO request, int userId)
+        public async Task<PagedResult<CategoryDTO>> UpdateAsync(int id, UpdateCategoryDTO request, int userId)
         {
             try
             {
                 var category = await _db.Categories.FirstOrDefaultAsync(c => c.Id == id);
 
-                if (category is null) return Result<CategoryDTO>.NotFound("Category not found.");
+                if (category is null) return PagedResult<CategoryDTO>.NotFound("Category not found.");
 
                 if (!string.IsNullOrWhiteSpace(request.Name))
                 {
@@ -149,7 +149,7 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                         c.Name.ToLower() == request.Name.Trim().ToLower());
 
                     if (isDuplicate)
-                        return Result<CategoryDTO>.SystemError("Another category with the same name already exists.");
+                        return PagedResult<CategoryDTO>.SystemError("Another category with the same name already exists.");
 
                     category.Name = request.Name.Trim();
                 }
@@ -169,27 +169,27 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                     Description = category.Description
                 };
 
-                return Result<CategoryDTO>.Success(data, "Category updated successfully.");
+                return PagedResult<CategoryDTO>.Success(data, "Category updated successfully.");
             }
             catch (Exception ex)
             {
-                return Result<CategoryDTO>.SystemError(ex.Message);
+                return PagedResult<CategoryDTO>.SystemError(ex.Message);
             }
         }
         #endregion
 
         #region delete category
-        public async Task<Result<bool>> DeleteAsync(int id, int userId)
+        public async Task<PagedResult<bool>> DeleteAsync(int id, int userId)
         {
             try
             {
                 var category = await _db.Categories.FirstOrDefaultAsync(c => c.Id == id);
 
-                if (category is null) return Result<bool>.NotFound("Category not found!");
+                if (category is null) return PagedResult<bool>.NotFound("Category not found!");
 
                 var hasProducts = await _db.Products.AnyAsync(p => p.CategoryId == id && !p.DeleteFlag);
 
-                if (hasProducts) return Result<bool>.SystemError("Cannot delete category with existing products.");
+                if (hasProducts) return PagedResult<bool>.SystemError("Cannot delete category with existing products.");
 
                 category.DeleteFlag = true;
                 category.UpdatedAt = DateTime.UtcNow;
@@ -197,11 +197,11 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
 
                 await _db.SaveChangesAsync();
 
-                return Result<bool>.Success(true, "Category deleted successfully.");
+                return PagedResult<bool>.Success(true, "Category deleted successfully.");
             }
             catch (Exception ex)
             {
-                return Result<bool>.SystemError(ex.Message);
+                return PagedResult<bool>.SystemError(ex.Message);
             }
         }
         #endregion

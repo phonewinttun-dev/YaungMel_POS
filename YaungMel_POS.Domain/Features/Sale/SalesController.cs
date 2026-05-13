@@ -63,7 +63,7 @@ namespace YaungMel_POS.Domain.Features.Sale
             try
             {
                 if (!ModelState.IsValid)
-                    return BadRequest(Result<object>.SystemError("Invalid sale data."));
+                    return BadRequest(PagedResult<object>.SystemError("Invalid sale data."));
 
                 var result = await _service.CreateSaleAsync(createRequest, GetCurrentUserId());
 
@@ -74,7 +74,7 @@ namespace YaungMel_POS.Domain.Features.Sale
 
                 if (result.Data == null)
                 {
-                    return BadRequest(Result<object>.SystemError("Sale created but no data returned."));
+                    return BadRequest(PagedResult<object>.SystemError("Sale created but no data returned."));
                 }
 
                 return CreatedAtAction(
@@ -84,7 +84,7 @@ namespace YaungMel_POS.Domain.Features.Sale
             }
             catch (Exception ex)
             {
-                return StatusCode(500, Result<object>.SystemError($"Internal Server Error: {ex.Message}"));
+                return StatusCode(500, PagedResult<object>.SystemError($"Internal Server Error: {ex.Message}"));
             }
         }
     }

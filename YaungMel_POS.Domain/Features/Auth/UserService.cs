@@ -55,29 +55,29 @@ namespace YaungMel_POS.Domain.Features.Auth
         #endregion
 
         #region user registration
-        public async Task<Result<UserResponse>> RegisterAsync(UserRegisterRequest request)
+        public async Task<PagedResult<UserResponse>> RegisterAsync(UserRegisterRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.Name)) return Result<UserResponse>.SystemError("Username cannot be null");
+            if (string.IsNullOrWhiteSpace(request.Name)) return PagedResult<UserResponse>.SystemError("Username cannot be null");
 
             // mobile number validation check
             var mobileNum = request.MobileNum.Trim();
 
-            if (string.IsNullOrWhiteSpace(request.MobileNum)) return Result<UserResponse>.SystemError("Mobile number is required.");
+            if (string.IsNullOrWhiteSpace(request.MobileNum)) return PagedResult<UserResponse>.SystemError("Mobile number is required.");
 
-            if (!IsValidMobileNum(mobileNum)) return Result<UserResponse>.SystemError("Invalid mobile number format.");
+            if (!IsValidMobileNum(mobileNum)) return PagedResult<UserResponse>.SystemError("Invalid mobile number format.");
 
             // password validation check
-            if (string.IsNullOrWhiteSpace(request.Password)) return Result<UserResponse>.SystemError("Password required.");
+            if (string.IsNullOrWhiteSpace(request.Password)) return PagedResult<UserResponse>.SystemError("Password required.");
 
             var passValidation = ValidatePassword(request.Password);
 
-            if (!passValidation.IsValid) return Result<UserResponse>.SystemError(passValidation.Message);
+            if (!passValidation.IsValid) return PagedResult<UserResponse>.SystemError(passValidation.Message);
 
             // duplication check
             var existingUser = await _context.Users
                 .AnyAsync(u => u.MobileNum == mobileNum && !u.DeleteFlag);
 
-            if (existingUser) return Result<UserResponse>.SystemError("User with this mobile number already exists.");
+            if (existingUser) return PagedResult<UserResponse>.SystemError("User with this mobile number already exists.");
             
             string hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
 
@@ -103,27 +103,27 @@ namespace YaungMel_POS.Domain.Features.Auth
                     UserId = newUser.Id
                 };
 
-                return Result<UserResponse>.Success(responseJson, responseJson.Message);
+                return PagedResult<UserResponse>.Success(responseJson, responseJson.Message);
             }
             catch (Exception ex)
             {
-                return Result<UserResponse>.SystemError($"An error occurred during registration: {ex.Message}");
+                return PagedResult<UserResponse>.SystemError($"An error occurred during registration: {ex.Message}");
             }
         }
         #endregion
 
         #region edit user profile
-        public async Task<Result<UserResponse>> UpdateAsync(int id, UserUpdateRequest request,int currentUserId)
+        public async Task<PagedResult<UserResponse>> UpdateAsync(int id, UserUpdateRequest request,int currentUserId)
         {
             // current user check
-            if (id != currentUserId) return Result<UserResponse>.SystemError("Unauthorized access!");
+            if (id != currentUserId) return PagedResult<UserResponse>.SystemError("Unauthorized access!");
 
             try
             {
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id && !u.DeleteFlag);
 
                 if (user == null)
-                    return Result<UserResponse>.SystemError("User not found.");
+                    return PagedResult<UserResponse>.SystemError("User not found.");
 
                 if (!string.IsNullOrWhiteSpace(request.Name))
                     user.Name = request.Name.Trim();
@@ -131,13 +131,13 @@ namespace YaungMel_POS.Domain.Features.Auth
                 if (!string.IsNullOrWhiteSpace(request.MobileNum))
                 {
                     if (!IsValidMobileNum(request.MobileNum))
-                        return Result<UserResponse>.SystemError("Invalid mobile number format.");
+                        return PagedResult<UserResponse>.SystemError("Invalid mobile number format.");
 
                     var mobileExists = await _context.Users
                         .AnyAsync(u => u.MobileNum == request.MobileNum.Trim() && u.Id != id && !u.DeleteFlag);
 
                     if (mobileExists)
-                        return Result<UserResponse>.SystemError("Mobile number already in use by another user.");
+                        return PagedResult<UserResponse>.SystemError("Mobile number already in use by another user.");
 
                     user.MobileNum = request.MobileNum.Trim();
                 }
@@ -161,33 +161,33 @@ namespace YaungMel_POS.Domain.Features.Auth
                     UserId = user.Id
                 };
 
-                return Result<UserResponse>.Success(response, response.Message);
+                return PagedResult<UserResponse>.Success(response, response.Message);
             }
             catch (Exception ex)
             {
-                return Result<UserResponse>.SystemError($"An error occurred during update: {ex.Message}");
+                return PagedResult<UserResponse>.SystemError($"An error occurred during update: {ex.Message}");
             }
         }
         #endregion
 
         #region change password
-        public async Task<Result<UserResponse>> ChangePasswordAsync(int id, ChangePasswordRequest request,int currentUserId)
+        public async Task<PagedResult<UserResponse>> ChangePasswordAsync(int id, ChangePasswordRequest request,int currentUserId)
         {
             // current user check
-            if (id != currentUserId) return Result<UserResponse>.SystemError("Unauthorized access!");
+            if (id != currentUserId) return PagedResult<UserResponse>.SystemError("Unauthorized access!");
 
             try
             {
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id && !u.DeleteFlag);
 
                 if (user == null)
-                    return Result<UserResponse>.SystemError("User not found.");
+                    return PagedResult<UserResponse>.SystemError("User not found.");
 
                 if (!BCrypt.Net.BCrypt.Verify(request.OldPassword, user.Password))
-                    return Result<UserResponse>.SystemError("Invalid old password.");
+                    return PagedResult<UserResponse>.SystemError("Invalid old password.");
              
                 var passValidation = ValidatePassword(request.NewPassword);
-                if (!passValidation.IsValid) return Result<UserResponse>.SystemError(passValidation.Message);
+                if (!passValidation.IsValid) return PagedResult<UserResponse>.SystemError(passValidation.Message);
 
                 user.Password = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
 
@@ -202,24 +202,24 @@ namespace YaungMel_POS.Domain.Features.Auth
                     UserId = user.Id
                 };
 
-                return Result<UserResponse>.Success(response, response.Message);
+                return PagedResult<UserResponse>.Success(response, response.Message);
             }
             catch (Exception ex)
             {
-                return Result<UserResponse>.SystemError($"An error occurred while changing password: {ex.Message}");
+                return PagedResult<UserResponse>.SystemError($"An error occurred while changing password: {ex.Message}");
             }
         }
         #endregion
 
         #region delete user
-        public async Task<Result<UserResponse>> DeleteAsync(int id)
+        public async Task<PagedResult<UserResponse>> DeleteAsync(int id)
         {
             try
             {
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
 
                 if (user == null || user.DeleteFlag)
-                    return Result<UserResponse>.SystemError("User not found or already deleted.");
+                    return PagedResult<UserResponse>.SystemError("User not found or already deleted.");
 
                 user.DeleteFlag = true;
                 user.UpdatedAt = DateTime.UtcNow;
@@ -233,17 +233,17 @@ namespace YaungMel_POS.Domain.Features.Auth
                     UserId = user.Id
                 };
 
-                return Result<UserResponse>.Success(response, response.Message);
+                return PagedResult<UserResponse>.Success(response, response.Message);
             }
             catch (Exception ex)
             {
-                return Result<UserResponse>.SystemError($"An error occurred during deletion: {ex.Message}");
+                return PagedResult<UserResponse>.SystemError($"An error occurred during deletion: {ex.Message}");
             }
         }
         #endregion
         
         #region get all users
-        public async Task<Result<List<UserDTO>>> GetAllAsync()
+        public async Task<PagedResult<List<UserDTO>>> GetAllAsync()
         {
             try
             {
@@ -260,11 +260,11 @@ namespace YaungMel_POS.Domain.Features.Auth
                     })
                     .ToListAsync();
 
-                return Result<List<UserDTO>>.Success(users, "Users retrieved successfully.");
+                return PagedResult<List<UserDTO>>.Success(users, "Users retrieved successfully.");
             }
             catch (Exception ex)
             {
-                return Result<List<UserDTO>>.SystemError($"An error occurred while retrieving users: {ex.Message}");
+                return PagedResult<List<UserDTO>>.SystemError($"An error occurred while retrieving users: {ex.Message}");
             }
         }
         #endregion
