@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
-using YaungMel_POS.Shared.Responses;
 using YaungMel_POS.Domain.DTOs;
+using YaungMel_POS.Shared;
 
 namespace YaungMel_POS.Domain.Features.Search
 {

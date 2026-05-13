@@ -29,18 +29,18 @@ namespace YaungMel_POS.Domain.Features.Inventory
             };
         }
 
-        private IQueryable<Tbl_Product> ActiveProduct => _db.Products.Where(p => !p.DeleteFlag);
+        private IQueryable<Tbl_Product> ActiveProduct => _db.Products.Where(p => !p.DeleteFlag && p.IsActive);
 
         #region increase stock
-        public async Task<PagedResult<bool>> IncreaseStockAsync(int productId, int quantity, int userId)
+        public async Task<Result<bool>> IncreaseStockAsync(int productId, int quantity, int userId)
         {
             try
             {
                 if (quantity <= 0)
-                    return PagedResult<bool>.SystemError("Quantity must be greater than zero.");
+                    return Result<bool>.SystemError("Quantity must be greater than zero.");
 
                 var product = await ActiveProduct.FirstOrDefaultAsync(p => p.Id == productId);
-                if (product is null) return PagedResult<bool>.SystemError("Product not found");
+                if (product is null) return Result<bool>.SystemError("Product not found");
 
                 var oldValues = JsonSerializer.Serialize(product, _jsonOptions);
 
@@ -49,30 +49,30 @@ namespace YaungMel_POS.Domain.Features.Inventory
 
                 await _db.SaveChangesAsync();
 
-                await _auditService.LogUpdateAsync(product, userId, oldValues, "Product");
+                await _auditService.LogUpdateAsync(product, userId, oldValues, $"{product.Name}");
 
-                return PagedResult<bool>.Success(true, "Stock increased successfully.");
+                return Result<bool>.Success(true, "Stock increased successfully.");
             }
             catch (Exception ex)
             {
-                return PagedResult<bool>.SystemError(ex.Message);
+                return Result<bool>.SystemError(ex.Message);
             }
         }
         #endregion
 
         #region decrease stock
-        public async Task<PagedResult<bool>> DecreaseStockAsync(int productId, int quantity, int userId)
+        public async Task<Result<bool>> DecreaseStockAsync(int productId, int quantity, int userId)
         {
             try
             {
                 var product = await ActiveProduct.FirstOrDefaultAsync(p => p.Id == productId);
 
-                if (product is null) return PagedResult<bool>.SystemError("Product not found");
+                if (product is null) return Result<bool>.SystemError("Product not found");
 
-                if (quantity <= 0) return PagedResult<bool>.SystemError("Quantity must be greater than zero.");
+                if (quantity <= 0) return Result<bool>.SystemError("Quantity must be greater than zero.");
 
                 if (product.StockQuantity < quantity)
-                    return PagedResult<bool>.SystemError("Insufficient stock quantity available.");
+                    return Result<bool>.SystemError("Insufficient stock quantity available.");
 
                 var oldValues = JsonSerializer.Serialize(product, _jsonOptions);
 
@@ -84,19 +84,19 @@ namespace YaungMel_POS.Domain.Features.Inventory
 
                 await _db.SaveChangesAsync();
 
-                await _auditService.LogUpdateAsync(product, userId, oldValues, "Product");
+                await _auditService.LogUpdateAsync(product, userId, oldValues, $"{product.Name}");
 
-                return PagedResult<bool>.Success(true, "Stock decreased successfully.");
+                return Result<bool>.Success(true, "Stock decreased successfully.");
             }
             catch (Exception)
             {
-                return PagedResult<bool>.SystemError("Unexpected error occured.");
+                return Result<bool>.SystemError("Unexpected error occured.");
             }
         }
         #endregion
 
         #region get low stock alert
-        public async Task<PagedResult<List<ProductDTO>>> GetLowStockAlertsAsync(int lowStock = 5)
+        public async Task<Result<List<ProductDTO>>> GetLowStockAlertsAsync(int lowStock = 5)
         {
             try
             {
@@ -116,22 +116,22 @@ namespace YaungMel_POS.Domain.Features.Inventory
                     })
                     .ToListAsync();
 
-                return PagedResult<List<ProductDTO>>.Success(products, "Low stock products retrieved.");
+                return Result<List<ProductDTO>>.Success(products, "Low stock products retrieved.");
             }
             catch (Exception ex)
             {
-                return PagedResult<List<ProductDTO>>.SystemError(ex.Message);
+                return Result<List<ProductDTO>>.SystemError(ex.Message);
             }
         }
         #endregion
 
         #region update price
-        public async Task<PagedResult<bool>> UpdatePriceAsync(int productId, decimal newPrice, int userId)
+        public async Task<Result<bool>> UpdatePriceAsync(int productId, decimal newPrice, int userId)
         {
             try
             {
                 var product = await _db.Products.FirstOrDefaultAsync(p => p.Id == productId && !p.DeleteFlag);
-                if (product is null) return PagedResult<bool>.SystemError("Product not found.");
+                if (product is null) return Result<bool>.SystemError("Product not found.");
 
                 var oldValues = JsonSerializer.Serialize(product, _jsonOptions);
 
@@ -142,11 +142,11 @@ namespace YaungMel_POS.Domain.Features.Inventory
 
                 await _auditService.LogUpdateAsync(product, userId, oldValues, "Product");
 
-                return PagedResult<bool>.Success(true, "Price updated successfully.");
+                return Result<bool>.Success(true, "Price updated successfully.");
             }
             catch (Exception ex)
             {
-                return PagedResult<bool>.SystemError(ex.Message);
+                return Result<bool>.SystemError(ex.Message);
             }
         }
         #endregion

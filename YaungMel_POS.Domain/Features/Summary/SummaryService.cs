@@ -1,11 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Query.Internal;
 using YaungMel_POS.Database.Data;
 using YaungMel_POS.Database.Models;
 using YaungMel_POS.Domain.DTOs;
@@ -100,14 +93,15 @@ public class SummaryService : ISummaryService
     #endregion
 
     #region Get Summary By Pagination
-    public async Task<PagedResult<SummaryDTO>> GetSummaryByPagination(PaginationRequest request)
+    public async Task<PagedResult<SummaryDetailDto>> GetSummaryByPagination(PaginationRequest request)
     {
-        if (request is null) return PagedResult<SummaryDTO>.ValidationError("Request cannot be null!");
-        
+        if (request is null)
+        {
+            return PagedResult<SummaryDetailDto>.ValidationError("Request cannot be null!");
+        }
+
         try
         {
-
-
             var totalItems = await _db.Summaries.CountAsync();
 
             var summaries = await _db.Summaries
@@ -115,23 +109,25 @@ public class SummaryService : ISummaryService
                 .OrderByDescending(s => s.Date)
                 .Skip((request.PageNumber - 1) * request.PageSize)
                 .Take(request.PageSize)
-                .Select(s => new SummaryDTO
+                .Select(s => new SummaryDetailDto
                 {
-                    Date = s.Date,
-                    TotalSale = s.TotalSale,
-                    TotalAmount = s.TotalAmount,
-                    TotalAmountFormatted = s.TotalAmount.ToString("N0"),
-                    TopSaleProductName = s.TopSaleProduct != null ? s.TopSaleProduct.Name : null
-                })
-                .ToListAsync();
+                    Summary = new SummaryDTO
+                    {
+                        Date = s.Date,
+                        TotalSale = s.TotalSale,
+                        TotalAmount = s.TotalAmount,
+                        TotalAmountFormatted = s.TotalAmount.ToString("N0"),
+                        TopSaleProductName = s.TopSaleProduct != null ? s.TopSaleProduct.Name : null
+                    }
+                }).ToListAsync();
 
             var pagination = new Pagination(request.PageSize, request.PageNumber, totalItems);
         
-            return PagedResult<SummaryDTO>.Success(summaries, pagination);
+            return PagedResult<SummaryDetailDto>.Success(summaries, pagination);
         }
         catch (Exception ex)
         {
-            return PagedResult<SummaryDTO>.SystemError(ex.Message);
+            return PagedResult<SummaryDetailDto>.SystemError(ex.Message);
         }
     }
     #endregion
