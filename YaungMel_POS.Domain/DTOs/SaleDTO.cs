@@ -1,11 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using YaungMel_POS.Database.Models;
-
-namespace YaungMel_POS.Domain.DTOs;
+﻿namespace YaungMel_POS.Domain.DTOs;
 
 public class SaleDTO
 {
@@ -42,8 +35,3 @@ public class CreateSaleItemDTO
     public int Quantity { get; set; }
 }
 
-public class SaleListResponseDTO
-{
-    public List<SaleDTO> Items { get; set; } = null!;
-    public PageSettingDTO PageSetting { get; set; } = null!;
-}

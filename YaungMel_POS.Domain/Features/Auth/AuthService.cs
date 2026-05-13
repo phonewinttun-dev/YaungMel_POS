@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 using System.Text;
 using YaungMel_POS.Domain.DTOs;
 using YaungMel_POS.Database.Data;
+using YaungMel_POS.Shared;
 
 namespace YaungMel_POS.Domain.Features.Auth;
 
@@ -22,16 +23,23 @@ public class AuthService : IAuthService
         _configuration = configuration;
     }
 
-    public async Task<TokenResponse?> LoginAsync(LoginRequest request)
+    private IQueryable<Tbl_User> ActiveUserQuery => _context.Users
+            .AsNoTracking().Where(u => !u.DeleteFlag);
+
+    #region user login
+    public async Task<Result<TokenResponse?>> LoginAsync(LoginRequest request)
     {
-        var user = await _context.Users
+        var user = await ActiveUserQuery
             .FirstOrDefaultAsync(u => u.MobileNum == request.MobileNum && !u.DeleteFlag);
 
-        if (user == null) return null;
+        if (user == null)
+        {
+            return Result<TokenResponse?>.NotFound("Invalid username or password!");
+        }
 
         if (!BCrypt.Net.BCrypt.Verify(request.Password, user.Password))
         {
-            return null;
+            return Result<TokenResponse?>.ValidationError("Invalid username or password!");
         }
 
         var accessToken = _tokenService.GenerateAccessToken(user);
@@ -50,23 +58,28 @@ public class AuthService : IAuthService
         _context.UserToken.Add(userToken);
         await _context.SaveChangesAsync();
 
-        return new TokenResponse
+        return Result<TokenResponse?>.Success(new TokenResponse
         {
             AccessToken = accessToken,
             RefreshToken = refreshToken,
             MobileNum = user.MobileNum,
             Role = user.Role.ToString()
-        };
+        });
     }
+    #endregion
 
-    public async Task<TokenResponse?> RefreshTokenAsync(string refreshToken)
+    #region refresh token
+    public async Task<Result<TokenResponse?>> RefreshTokenAsync(string refreshToken)
     {
         var hashedToken = HashToken(refreshToken);
         var userToken = await _context.UserToken
             .Include(ut => ut.User)
             .FirstOrDefaultAsync(ut => ut.TokenHash == hashedToken && !ut.Revoked && ut.ExpiresAt > DateTime.UtcNow);
 
-        if (userToken == null) return null;
+        if (userToken == null)
+        {
+            return Result<TokenResponse?>.NotFound("Unexpected error occured!");
+        }
 
         userToken.Revoked = true;
 
@@ -87,14 +100,15 @@ public class AuthService : IAuthService
         _context.UserToken.Add(newUserToken);
         await _context.SaveChangesAsync();
 
-        return new TokenResponse
+        return Result<TokenResponse?>.Success(new TokenResponse
         {
             AccessToken = newAccessToken,
             RefreshToken = newRefreshToken,
             MobileNum = user.MobileNum,
             Role = user.Role.ToString()
-        };
+        });
     }
+    #endregion
 
     private string HashToken(string token)
     {

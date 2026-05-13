@@ -26,6 +26,15 @@ public class AuthController : ControllerBase
         return userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
     }
 
+    [Authorize(Roles = "Admin")]
+    [HttpGet("users")]
+    public async Task<IActionResult> GetAllUsers([FromQuery] PaginationRequest request)
+    {
+        var result = await _registerService.GetAllAsync(request);
+        if (!result.IsSuccess) return BadRequest(result);
+        return Ok(result);
+    }
+
     //[Authorize(Roles = "Admin,Staff")]
     [AllowAnonymous]
     [HttpPost("register")]
@@ -49,14 +58,18 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         if (!ModelState.IsValid)
-            return BadRequest(PagedResult<object>.SystemError("Invalid login data."));
+        {
+            return BadRequest("Invalid login data.");
+        }
 
         var result = await _authService.LoginAsync(request);
 
         if (result == null)
         {
-            return Unauthorized(PagedResult<object>.SystemError("Invalid mobile number or password."));
+            return Unauthorized();
         }
+
+        var tokenResponse = result.Data;
 
         // Store refresh token in HttpOnly cookie
         var cookieOptions = new CookieOptions
@@ -66,12 +79,18 @@ public class AuthController : ControllerBase
             SameSite = SameSiteMode.Strict,
             Expires = DateTime.UtcNow.AddDays(7) 
         };
-        Response.Cookies.Append("refreshToken", result.RefreshToken, cookieOptions);
+
+        Response.Cookies.Append("refreshToken", tokenResponse.RefreshToken, cookieOptions);
 
         // Clear refresh token from response body
-        result.RefreshToken = string.Empty;
+        tokenResponse.RefreshToken = string.Empty;
 
-        return Ok(PagedResult<TokenResponse>.Success(result, "Login successful."));
+        return Ok(new
+        {
+            success = true,
+            message = "Token refreshed successfully.",
+            data = tokenResponse
+        });
     }
 
     //[Authorize]
@@ -122,25 +141,10 @@ public class AuthController : ControllerBase
     {
         var result = await _registerService.DeleteAsync(id);
 
-        if (!result.IsSuccess)
-        {
-            return BadRequest(result);
-        }
+        if (!result.IsSuccess) return BadRequest(result);
 
         return Ok(result);
     }
 
-    [Authorize(Roles = "Admin")]
-    [HttpGet("users")]
-    public async Task<IActionResult> GetAllUsers()
-    {
-        var result = await _registerService.GetAllAsync();
-
-        if (!result.IsSuccess)
-        {
-            return BadRequest(result);
-        }
-
-        return Ok(result);
-    }
+    
 }

@@ -27,18 +27,12 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
             return userIdClaim != null ? int.Parse(userIdClaim.Value) : 0;
         }
 
-        // GET: api/products/paged?pageNo=1&pageSize=10
+        // GET: api/products/paged?pageNumber=1&pageSize=10
         [HttpGet("paged")]
-        public async Task<IActionResult> Get([FromQuery] int pageNo = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> Get([FromQuery] PaginationRequest request)
         {
-            if (pageNo <= 0 || pageSize <= 0)
-            {
-                return BadRequest("Page number and page size must be greater than zero.");
-            }
-            var result = await _service.GetAsync(pageNo, pageSize);
-
+            var result = await _service.GetAsync(request);
             if (!result.IsSuccess) return BadRequest(result);
-
             return Ok(result);
         }
 
@@ -53,13 +47,13 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
 
         // POST: api/products/
         [Authorize(Roles = "Admin")]
+        [Consumes("multipart/form-data")]
         [HttpPost()]
         public async Task<IActionResult> Create([FromForm] CreateProductDTO createRequest, IFormFile? photoFile)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // 1. Check if a file was provided (optional)
             Stream? stream = null;
             string fileName = string.Empty;
             if (photoFile != null && photoFile.Length > 0)
@@ -75,25 +69,8 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
 
             return CreatedAtAction(
                 nameof(GetById),
-                new { id = result.Data!.Id },
+                new { id = result.Data?.Id },
                 result);
-        }
-
-        // this endpoint is just for testing
-        // POST: api/products/bulk
-        [Authorize(Roles = "Admin")]
-        [HttpPost("bulk")]
-        public async Task<IActionResult> BulkCreate([FromBody] List<CreateProductDTO> bulkRequest)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
-
-            var result = await _service.BulkCreateAsync(bulkRequest, GetCurrentUserId());
-
-            if (!result.IsSuccess)
-                return BadRequest(result);
-
-            return Ok(result);
         }
 
         // PATCH: api/products/{id}

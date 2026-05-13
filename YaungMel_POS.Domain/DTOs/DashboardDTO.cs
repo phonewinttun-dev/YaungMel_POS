@@ -1,8 +1,4 @@
-using System;
-using System.Collections.Generic;
-
 namespace YaungMel_POS.Domain.DTOs;
-
 
 public class SalesOverviewDTO
 {
@@ -11,7 +7,6 @@ public class SalesOverviewDTO
     public DateTime StartDate { get; set; }
     public DateTime EndDate { get; set; }
 }
-
 
 public class SalesPerPeriodDTO
 {

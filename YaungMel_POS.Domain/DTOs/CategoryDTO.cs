@@ -27,10 +27,3 @@ public class UpdateCategoryDTO
     [MaxLength(250)]
     public string? Description { get; set; }
 }
-
-public class CategoryListResponseModel
-{
-    public List<CategoryDTO> Items { get; set; } = null!;
-    public PageSettingDTO PageSetting { get; set; } = null!;
-
-} 

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Security.Claims;
 using YaungMel_POS.Domain.DTOs;
 using YaungMel_POS.Shared.Responses;
+using YaungMel_POS.Shared;
 
 namespace YaungMel_POS.Domain.Features.ProductsCatalog
 {
@@ -29,17 +30,10 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
         [HttpGet]
         // GET: api/categories/paged?pageNo=1&pageSize=10
         [HttpGet("paged")]
-        public async Task<IActionResult> Get([FromQuery] int pageNo = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> Get([FromQuery] PaginationRequest request)
         {
-            if (pageNo <= 0 || pageSize <= 0)
-            {
-                return BadRequest("Page number and page size must be greater than zero.");
-            }
-
-            var result = await _service.GetAsync(pageNo, pageSize);
-
+            var result = await _service.GetAsync(request);
             if (!result.IsSuccess) return BadRequest(result);
-
             return Ok(result);
         }
 
@@ -48,9 +42,7 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
         public async Task<IActionResult> GetById(int id)
         {
             var result = await _service.GetByIdAsync(id);
-
             if (!result.IsSuccess) return NotFound(result);
-
             return Ok(result);
         }
 
@@ -82,7 +74,7 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
             var result = await _service.UpdateAsync(id, request, GetCurrentUserId());
 
             if (!result.IsSuccess)
-                return result.Message.Contains("not found") ? NotFound(result) : BadRequest(result);
+                return BadRequest(result);
 
             return Ok(result);
         }
@@ -98,7 +90,7 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
             var result = await _service.DeleteAsync(id, GetCurrentUserId());
 
             if (!result.IsSuccess)
-                return result.Message.Contains("not found") ? NotFound(result) : BadRequest(result);
+                return BadRequest(result);
 
             return Ok(result);
         }

@@ -44,11 +44,10 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                     };
                 }
                 
-
                 var uploadParams = new ImageUploadParams
                 {
                     File = new FileDescription(fileName, photoStream),
-                    //Transformation = new Transformation().Height(500).Width(500).Crop("fill").Gravity("face"),
+                    Transformation = new Transformation().Height(500).Width(500).Crop("fill").Gravity("face"),
                     Folder = "yaungmel_pos_product_photos"
                 };
 
@@ -56,7 +55,7 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Photo upload error: {ex}");
+                Console.WriteLine($"Photo upload error: {ex}");// need to change to logging
                 return new ImageUploadResult
                 {
                     Error = new Error { Message = $"Internal error during photo upload: {ex.Message}" }

@@ -15,12 +15,6 @@ public class SummaryDTO
     public string? TopSaleProductName { get; set; }
 }
 
-public class SummaryListResponseModel
-{
-    public List<SummaryDTO> Items { get; set; } = null!;
-    public PageSettingDTO PageSetting { get; set; } = null!;
-}
-
 public class SummaryDetailDto
 {
     public SummaryDTO Summary { get; set; } = new();

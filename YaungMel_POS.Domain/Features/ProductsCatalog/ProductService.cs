@@ -65,7 +65,7 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                     .ToListAsync();
 
                 var pagination = new Pagination(request.PageSize, request.PageNumber, totalProducts);
-                return PagedResult<ProductDTO>.Success(products, pagination);
+                return PagedResult<ProductDTO>.Success(products, pagination, "Products retrieved successfully!");
             }
             catch (Exception ex)
             {
@@ -100,7 +100,7 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                     Version = product.xmin
                 };
 
-                return Result<ProductDTO>.Success(data);
+                return Result<ProductDTO>.Success(data, $"{data.Name} retrieved successfully!");
             }
             catch (Exception ex)
             {
@@ -118,12 +118,20 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                 var duplicateProduct = await _db.Products
                     .AnyAsync(p => p.Name.ToLower() == request.Name.Trim().ToLower() && !p.DeleteFlag);
 
-                if (duplicateProduct) return Result<ProductDTO>.SystemError("Product with the same name already exists.");
+                if (duplicateProduct) 
+                    return Result<ProductDTO>.ValidationError("Product with the same name already exists.");
 
                 var categoryExists = await _db.Categories
                     .AnyAsync(c => c.Id == request.CategoryId && !c.DeleteFlag);
 
-                if (!categoryExists) return Result<ProductDTO>.SystemError("Category not found");
+                if (!categoryExists) 
+                    return Result<ProductDTO>.ValidationError("Category not found");
+
+                if (string.IsNullOrWhiteSpace(request.Name))
+                    return Result<ProductDTO>.ValidationError("Product name is required!");
+
+                if (request.Price <=  0) 
+                    return Result<ProductDTO>.ValidationError("Price must be greater than zero!");
 
                 string photoUrl = null;
 
