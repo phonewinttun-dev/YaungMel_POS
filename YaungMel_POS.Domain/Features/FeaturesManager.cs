@@ -40,17 +40,17 @@ namespace YaungMel_POS.Domain.Features
             builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 
             //cloudinary config
-            var cloudName = (builder.Configuration["Cloudinary:CloudName"]
-                            ?? builder.Configuration["CLOUDINARY_CLOUD_NAME"]
-                            ?? builder.Configuration["cloud_name"])?.Trim();
+            var cloudName = new[] { "Cloudinary:CloudName", "CLOUDINARY_CLOUD_NAME", "cloud_name" }
+                .Select(key => builder.Configuration[key])
+                .FirstOrDefault(val => !string.IsNullOrWhiteSpace(val))?.Trim();
 
-            var apiKey = (builder.Configuration["Cloudinary:ApiKey"]
-                         ?? builder.Configuration["CLOUDINARY_API_KEY"]
-                         ?? builder.Configuration["api_key"])?.Trim();
+            var apiKey = new[] { "Cloudinary:ApiKey", "CLOUDINARY_API_KEY", "api_key" }
+                .Select(key => builder.Configuration[key])
+                .FirstOrDefault(val => !string.IsNullOrWhiteSpace(val))?.Trim();
 
-            var apiSecret = (builder.Configuration["Cloudinary:ApiSecret"]
-                            ?? builder.Configuration["CLOUDINARY_API_SECRET"]
-                            ?? builder.Configuration["api_secret"])?.Trim();
+            var apiSecret = new[] { "Cloudinary:ApiSecret", "CLOUDINARY_API_SECRET", "api_secret" }
+                .Select(key => builder.Configuration[key])
+                .FirstOrDefault(val => !string.IsNullOrWhiteSpace(val))?.Trim();
 
             var acc = new Account(cloudName, apiKey, apiSecret);
             builder.Services.AddSingleton(new Cloudinary(acc));
