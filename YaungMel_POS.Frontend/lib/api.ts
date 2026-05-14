@@ -40,7 +40,7 @@ import type {
   UserResponse,
 } from "./types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000" || "https://localhost:7144";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL;
 
 const api = axios.create({
   baseURL: API_BASE,
