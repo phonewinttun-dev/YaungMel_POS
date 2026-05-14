@@ -190,60 +190,48 @@ export const productsApi = {
   getById: (id: number) =>
     api.get<ApiResponse<ProductDTO>>(`/api/products/${id}`).then(unwrap),
 
-  createWithPhoto: (data: FormData) =>
-    api
-      .post<ApiResponse<ProductDTO>>("/api/products", data)
-      .then(unwrap),
-
-  // create: (input: CreateProductDTO | FormData) => {
-  //   const formData = input instanceof FormData
-  //       ? input
-  //       : createFormDataFromDTO(input);
-
-  //   return api.post<ApiResponse<ProductDTO>>("/api/products", formData)
-  //             .then(unwrap);
-  // },
   create: (input: CreateProductDTO | FormData) => {
-    const isFormData = input instanceof FormData;
-    const formData = isFormData ? input : createFormDataFromDTO(input);
+    const formData = input instanceof FormData
+      ? input
+      : createFormDataFromDTO(input);
 
-    return api
-      .post<ApiResponse<ProductDTO>>("/api/products", formData)
+    return api.post<ApiResponse<ProductDTO>>("/api/products", formData)
       .then(unwrap);
   },
+
 
   update: (id: number, data: UpdateProductDTO) => {
     const payload = new FormData();
-    if (data.name !== undefined) payload.append("Name", data.name);
-    if (data.description !== undefined)
-      payload.append("Description", data.description);
-    if (data.price !== undefined) payload.append("Price", String(data.price));
-    if (data.stockQuantity !== undefined)
-      payload.append("StockQuantity", String(data.stockQuantity));
-    if (data.categoryId !== undefined)
-      payload.append("CategoryId", String(data.categoryId));
-    if (data.version !== undefined)
-      payload.append("Version", String(data.version));
+if (data.name !== undefined) payload.append("Name", data.name);
+if (data.description !== undefined)
+  payload.append("Description", data.description);
+if (data.price !== undefined) payload.append("Price", String(data.price));
+if (data.stockQuantity !== undefined)
+  payload.append("StockQuantity", String(data.stockQuantity));
+if (data.categoryId !== undefined)
+  payload.append("CategoryId", String(data.categoryId));
+if (data.version !== undefined)
+  payload.append("Version", String(data.version));
 
-    return api
-      .patch<ApiResponse<ProductDTO>>(`/api/products/${id}`, payload)
-      .then(unwrap);
+return api
+  .patch<ApiResponse<ProductDTO>>(`/api/products/${id}`, payload)
+  .then(unwrap);
   },
 
-  updateWithPhoto: (id: number, data: FormData) =>
-    api
-      .patch<ApiResponse<ProductDTO>>(`/api/products/${id}`, data)
-      .then(unwrap),
+updateWithPhoto: (id: number, data: FormData) =>
+  api
+    .patch<ApiResponse<ProductDTO>>(`/api/products/${id}`, data)
+    .then(unwrap),
 
-  delete: (id: number) =>
-    api.delete<ApiResponse<object>>(`/api/products/${id}`).then(unwrap),
+  delete: (id: number, version: number) =>
+    api.delete<ApiResponse<object>>(`/api/products/${id}?version=${version}`).then(unwrap),
 
-  search: (term: string) =>
-    api
-      .get<
-        ApiResponse<ProductDTO[]>
-      >(`/api/products/search?term=${encodeURIComponent(term)}`)
-      .then(unwrap),
+    search: (term: string) =>
+      api
+        .get<
+          ApiResponse<ProductDTO[]>
+        >(`/api/products/search?term=${encodeURIComponent(term)}`)
+        .then(unwrap),
 };
 
 // ─── Categories API ───────────────────────────────────────
