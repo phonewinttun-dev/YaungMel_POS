@@ -36,13 +36,22 @@ namespace YaungMel_POS.Domain.Features
             }
             var loyaltySettings = builder.Configuration.GetSection("LoyaltyApiSettings");
 
-            // DinkToPDF 
+            // DinkToPDF
             builder.Services.AddSingleton(typeof(IConverter), new SynchronizedConverter(new PdfTools()));
 
             //cloudinary config
-            var cloudName = builder.Configuration["Cloudinary:CloudName"]?.Trim();
-            var apiKey = builder.Configuration["Cloudinary:ApiKey"]?.Trim();
-            var apiSecret = builder.Configuration["Cloudinary:ApiSecret"]?.Trim();
+            var cloudName = (builder.Configuration["Cloudinary:CloudName"]
+                            ?? builder.Configuration["CLOUDINARY_CLOUD_NAME"]
+                            ?? builder.Configuration["cloud_name"])?.Trim();
+
+            var apiKey = (builder.Configuration["Cloudinary:ApiKey"]
+                         ?? builder.Configuration["CLOUDINARY_API_KEY"]
+                         ?? builder.Configuration["api_key"])?.Trim();
+
+            var apiSecret = (builder.Configuration["Cloudinary:ApiSecret"]
+                            ?? builder.Configuration["CLOUDINARY_API_SECRET"]
+                            ?? builder.Configuration["api_secret"])?.Trim();
+
             var acc = new Account(cloudName, apiKey, apiSecret);
             builder.Services.AddSingleton(new Cloudinary(acc));
             builder.Services.AddScoped<IPhotoService, PhotoService>();
@@ -75,7 +84,7 @@ namespace YaungMel_POS.Domain.Features
             builder.Services.AddScoped<ITokenService, TokenService>();
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddScoped<IUserService, UserService>();
-            builder.Services.AddScoped<ISummaryService, SummaryService>();  
+            builder.Services.AddScoped<ISummaryService, SummaryService>();
             builder.Services.AddScoped<IReportService, ReportService>();
         }
     }

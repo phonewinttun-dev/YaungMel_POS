@@ -1,19 +1,19 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import { productsApi, categoriesApi } from "@/lib/api";
-import type { ProductDTO, CategoryDTO } from "@/lib/types";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Badge } from "@/components/ui/Badge";
-import { Modal } from "@/components/ui/Modal";
-import { SkeletonTable } from "@/components/ui/Skeleton";
 import { AnimatedPage } from "@/components/ui/AnimatedPage";
-import { toast } from "@/components/ui/Toast";
-import { useAuth } from "@/lib/auth-context";
-import { Plus, Search, Edit2, Trash2, Package, Filter, Upload } from "lucide-react";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { Input } from "@/components/ui/Input";
+import { Modal } from "@/components/ui/Modal";
 import { Pagination } from "@/components/ui/Pagination";
+import { SkeletonTable } from "@/components/ui/Skeleton";
+import { toast } from "@/components/ui/Toast";
+import { categoriesApi, productsApi } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
+import type { CategoryDTO, ProductDTO } from "@/lib/types";
+import { Edit2, Filter, Package, Plus, Search, Trash2, Upload } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 
 export default function ProductsPage() {
   const { isAdmin } = useAuth();
@@ -98,16 +98,16 @@ export default function ProductsPage() {
         };
         const res = photoFile
           ? await (() => {
-              const payload = new FormData();
-              payload.append("Name", form.name);
-              payload.append("Description", form.description || "");
-              payload.append("Price", Number(form.price).toString());
-              payload.append("StockQuantity", Number(form.stockQuantity).toString());
-              payload.append("CategoryId", Number(form.categoryId).toString());
-              payload.append("Version", String(editProduct.version ?? 0));
-              payload.append("photoFile", photoFile);
-              return productsApi.updateWithPhoto(editProduct.id, payload);
-            })()
+            const payload = new FormData();
+            payload.append("Name", form.name);
+            payload.append("Description", form.description || "");
+            payload.append("Price", Number(form.price).toString());
+            payload.append("StockQuantity", Number(form.stockQuantity).toString());
+            payload.append("CategoryId", Number(form.categoryId).toString());
+            payload.append("Version", String(editProduct.version ?? 0));
+            payload.append("photoFile", photoFile);
+            return productsApi.updateWithPhoto(editProduct.id, payload);
+          })()
           : await productsApi.update(editProduct.id, updatePayload);
         if (res.isSuccess) { toast("success", "Product updated"); setShowCreateModal(false); void loadData(); }
         else toast("error", res.message);
