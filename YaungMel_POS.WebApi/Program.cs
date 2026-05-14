@@ -131,8 +131,6 @@ try
     app.MapSwagger("/openapi/{documentName}.json");
     app.MapScalarApiReference();
 
-
-
     app.UseCors("_myAllowSpecificOrigins");
     app.UseHttpsRedirection();
     app.UseAuthentication();
