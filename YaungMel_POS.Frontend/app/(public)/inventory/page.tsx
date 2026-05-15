@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { inventoryApi, productsApi } from "@/lib/api";
+import { inventoryApi, productsApi, searchApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import type { ProductDTO } from "@/lib/types";
+import type { ProductDTO, PageSettingDTO } from "@/lib/types";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -12,7 +12,7 @@ import { Modal } from "@/components/ui/Modal";
 import { SkeletonTable } from "@/components/ui/Skeleton";
 import { AnimatedPage } from "@/components/ui/AnimatedPage";
 import { toast } from "@/components/ui/Toast";
-import { Warehouse, Plus, Minus, DollarSign, AlertTriangle } from "lucide-react";
+import { Warehouse, Plus, Minus, DollarSign, AlertTriangle, Search } from "lucide-react";
 import { Pagination } from "@/components/ui/Pagination";
 
 export default function InventoryPage() {
@@ -26,32 +26,40 @@ export default function InventoryPage() {
   const [newPrice, setNewPrice] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 15;
+  const [searchTerm, setSearchTerm] = useState("");
+  const [pageSetting, setPageSetting] = useState<PageSettingDTO>({
+    pageNo: 1,
+    pageSize: 10,
+    pageCount: 0,
+  });
 
-  const loadProducts = useCallback(async () => {
+  const loadProducts = useCallback(async (page: number = 1) => {
     setIsLoading(true);
     try {
-      const res = await productsApi.getAll();
+      const isFiltered = !!searchTerm || showLowOnly;
+      const res = await (isFiltered 
+        ? searchApi.search({
+            Name: searchTerm || undefined,
+            MaxStockQuantity: showLowOnly ? 5 : undefined,
+            PageNumber: page,
+            PageSize: pageSetting.pageSize,
+            SortBy: "name",
+          })
+        : productsApi.getPaged(page, pageSetting.pageSize));
+        
       if (res.isSuccess && res.data) {
-        const sortedProducts = res.data
-          .filter((p) => !p.deleteFlag)
-          .sort((a, b) => a.name.localeCompare(b.name));
-        setProducts(sortedProducts);
+        setProducts(res.data.items);
+        setPageSetting(res.data.pageSetting);
       }
-    } catch { toast("error", "Failed to load"); }
+    } catch { toast("error", "Failed to load inventory"); }
     finally { setIsLoading(false); }
-  }, []);
+  }, [searchTerm, showLowOnly, pageSetting.pageSize]);
 
-  useEffect(() => { void loadProducts(); }, [loadProducts]);
+  useEffect(() => { void loadProducts(1); }, [pageSetting.pageSize]);
 
-  const filtered = showLowOnly ? products.filter((p) => p.stockQuantity <= 5) : products;
-  const totalPages = Math.ceil(filtered.length / pageSize);
-  const paginated = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [showLowOnly]);
+  const handleSearch = () => {
+    void loadProducts(1);
+  };
 
   const handleAdjust = async () => {
     if (!adjustModal || !quantity || Number(quantity) <= 0) { toast("error", "Enter valid quantity"); return; }
@@ -88,18 +96,33 @@ export default function InventoryPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold text-[var(--text-primary)]">Inventory</h2>
-            <p className="text-sm text-[var(--text-secondary)] mt-1">{products.length} products tracked</p>
+            <p className="text-sm text-[var(--text-secondary)] mt-1">Track and manage your stock levels</p>
           </div>
-          <Button variant={showLowOnly ? "danger" : "secondary"} onClick={() => setShowLowOnly(!showLowOnly)} icon={<AlertTriangle size={16} />}>
-            {showLowOnly ? "Show All" : "Low Stock Only"}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant={showLowOnly ? "danger" : "secondary"} onClick={() => setShowLowOnly(!showLowOnly)} icon={<AlertTriangle size={16} />}>
+              {showLowOnly ? "Show All" : "Low Stock Only"}
+            </Button>
+          </div>
         </div>
 
+        <Card padding="sm">
+          <div className="flex gap-2 p-2">
+            <Input 
+              placeholder="Search by product name..." 
+              value={searchTerm} 
+              onChange={(e) => setSearchTerm(e.target.value)} 
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              icon={<Search size={18} />} 
+            />
+            <Button onClick={handleSearch} variant="secondary">Search</Button>
+          </div>
+        </Card>
+
         <Card padding="none">
-          {isLoading ? <div className="p-6"><SkeletonTable rows={8} /></div> : filtered.length === 0 ? (
+          {isLoading ? <div className="p-6"><SkeletonTable rows={8} /></div> : products.length === 0 ? (
             <div className="py-16 text-center">
               <Warehouse size={48} className="mx-auto mb-3 text-[var(--text-tertiary)] opacity-50" />
-              <p className="text-[var(--text-secondary)]">{showLowOnly ? "No low stock items" : "No products"}</p>
+              <p className="text-[var(--text-secondary)]">{showLowOnly ? "No low stock items found" : "No products found"}</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -112,9 +135,9 @@ export default function InventoryPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginated.map((p, index) => (
+                  {products.map((p, index) => (
                     <tr key={p.id} className="border-b border-[var(--border-primary)] last:border-0 hover:bg-[var(--bg-hover)] transition-colors">
-                      <td className="py-3 px-4 text-sm font-medium text-[var(--text-tertiary)]">{(currentPage - 1) * pageSize + index + 1}</td>
+                      <td className="py-3 px-4 text-sm font-medium text-[var(--text-tertiary)]">{(pageSetting.pageNo - 1) * pageSetting.pageSize + index + 1}</td>
                       <td className="py-3 px-4 text-sm font-medium text-[var(--text-primary)]">{p.name}</td>
                       <td className="py-3 px-4 text-sm font-mono text-[var(--text-primary)]">{p.priceFormatted} MMK</td>
                       <td className="py-3 px-4">{stockBadge(p.stockQuantity)}</td>
@@ -136,11 +159,11 @@ export default function InventoryPage() {
           )}
         </Card>
 
-        {filtered.length > pageSize && (
+        {pageSetting.pageCount > 1 && (
           <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
+            currentPage={pageSetting.pageNo}
+            totalPages={pageSetting.pageCount}
+            onPageChange={(page) => void loadProducts(page)}
           />
         )}
 

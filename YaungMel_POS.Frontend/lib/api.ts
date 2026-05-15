@@ -6,6 +6,7 @@ import type {
   ApiResponse,
   AvailableRewardResDTO,
   CategoryDTO,
+  CategoryListResponseModel,
   ClaimRewardReqDTO,
   ClaimRewardResDTO,
   CreateAccountReqDTO,
@@ -118,15 +119,21 @@ function normalizePageSetting(
     const page = pagination as {
       pageNo?: number;
       pageNumber?: number;
+      PageNumber?: number;
       pageSize?: number;
+      PageSize?: number;
       pageCount?: number;
+      PageCount?: number;
       totalPages?: number;
+      TotalPages?: number;
+      totalPage?: number;
+      TotalPage?: number;
     };
 
     return {
-      pageNo: page.pageNo ?? page.pageNumber ?? fallbackPageNo,
-      pageSize: page.pageSize ?? fallbackPageSize,
-      pageCount: page.pageCount ?? page.totalPages ?? 0,
+      pageNo: page.pageNo ?? page.pageNumber ?? page.PageNumber ?? fallbackPageNo,
+      pageSize: page.pageSize ?? page.PageSize ?? fallbackPageSize,
+      pageCount: page.pageCount ?? page.PageCount ?? page.totalPages ?? page.TotalPages ?? page.totalPage ?? page.TotalPage ?? 0,
     };
   }
 
@@ -179,6 +186,31 @@ export const productsApi = {
           ...raw,
           data: normalizeProductListData(raw.data),
         } as ApiResponse<ProductDTO[]>;
+      }),
+
+  getPaged: (pageNo: number, pageSize: number) =>
+    api
+      .get<
+        ApiResponse<unknown> & { data?: unknown; pagination?: unknown }
+      >(`/api/products/paged?pageNumber=${pageNo}&pageSize=${pageSize}`)
+      .then((res) => {
+        const raw = res.data;
+        const dataObject =
+          raw.data && typeof raw.data === "object" && !Array.isArray(raw.data)
+            ? (raw.data as { items?: unknown; pageSetting?: unknown })
+            : undefined;
+
+        return {
+          ...raw,
+          data: {
+            items: normalizeProductListData(dataObject?.items ?? raw.data),
+            pageSetting: normalizePageSetting(
+              dataObject?.pageSetting ?? raw.pagination,
+              pageNo,
+              pageSize,
+            ),
+          },
+        } as ApiResponse<ProductSearchResponseModel>;
       }),
 
   getAvailable: () =>
@@ -250,9 +282,27 @@ export const categoriesApi = {
   getPaged: (pageNo: number, pageSize: number) =>
     api
       .get<
-        ApiResponse<SummaryListResponseModel>
-      >(`/api/categories/paged?pageNo=${pageNo}&pageSize=${pageSize}`)
-      .then(unwrap),
+        ApiResponse<unknown> & { data?: unknown; pagination?: unknown }
+      >(`/api/categories/paged?pageNumber=${pageNo}&pageSize=${pageSize}`)
+      .then((res) => {
+        const raw = res.data;
+        const dataObject =
+          raw.data && typeof raw.data === "object" && !Array.isArray(raw.data)
+            ? (raw.data as { items?: unknown; pageSetting?: unknown })
+            : undefined;
+
+        return {
+          ...raw,
+          data: {
+            items: normalizeCategoryListData(dataObject?.items ?? raw.data),
+            pageSetting: normalizePageSetting(
+              dataObject?.pageSetting ?? raw.pagination,
+              pageNo,
+              pageSize,
+            ),
+          },
+        } as ApiResponse<CategoryListResponseModel>;
+      }),
 
   getById: (id: number) =>
     api.get<ApiResponse<CategoryDTO>>(`/api/categories/${id}`).then(unwrap),
@@ -390,13 +440,54 @@ export const dashboardApi = {
 export const searchApi = {
   search: (params: SearchRequestDTO) =>
     api
-      .get<ApiResponse<ProductSearchResponseModel>>("/api/search", { params })
-      .then(unwrap),
+      .get<
+        ApiResponse<unknown> & { data?: unknown; pagination?: unknown }
+      >("/api/search", { params })
+      .then((res) => {
+        const raw = res.data;
+        // Search API sometimes returns the data directly or wrapped in data object
+        const dataObject =
+          raw.data && typeof raw.data === "object" && !Array.isArray(raw.data)
+            ? (raw.data as { items?: unknown; pageSetting?: unknown })
+            : undefined;
+
+        return {
+          ...raw,
+          data: {
+            items: normalizeProductListData(dataObject?.items ?? raw.data),
+            pageSetting: normalizePageSetting(
+              dataObject?.pageSetting ?? raw.pagination,
+              params.PageNumber ?? 1,
+              params.PageSize ?? 20,
+            ),
+          },
+        } as ApiResponse<ProductSearchResponseModel>;
+      }),
 
   searchCategories: (params: SearchCategoryRequestDTO) =>
     api
-      .get<ApiResponse<CategoryDTO[]>>("/api/search/categories", { params })
-      .then(unwrap),
+      .get<
+        ApiResponse<unknown> & { data?: unknown; pagination?: unknown }
+      >("/api/search/categories", { params })
+      .then((res) => {
+        const raw = res.data;
+        const dataObject =
+          raw.data && typeof raw.data === "object" && !Array.isArray(raw.data)
+            ? (raw.data as { items?: unknown; pageSetting?: unknown })
+            : undefined;
+
+        return {
+          ...raw,
+          data: {
+            items: normalizeCategoryListData(dataObject?.items ?? raw.data),
+            pageSetting: normalizePageSetting(
+              dataObject?.pageSetting ?? raw.pagination,
+              params.pageNumber ?? 1,
+              params.pageSize ?? 20,
+            ),
+          },
+        } as ApiResponse<CategoryListResponseModel>;
+      }),
 };
 
 // ─── Reports API ──────────────────────────────────────────

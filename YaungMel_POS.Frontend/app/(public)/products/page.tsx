@@ -9,9 +9,9 @@ import { Modal } from "@/components/ui/Modal";
 import { Pagination } from "@/components/ui/Pagination";
 import { SkeletonTable } from "@/components/ui/Skeleton";
 import { toast } from "@/components/ui/Toast";
-import { categoriesApi, productsApi } from "@/lib/api";
+import { categoriesApi, productsApi, searchApi } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import type { CategoryDTO, ProductDTO } from "@/lib/types";
+import type { CategoryDTO, ProductDTO, PageSettingDTO } from "@/lib/types";
 import { Edit2, Filter, Package, Plus, Search, Trash2, Upload } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
@@ -29,43 +29,49 @@ export default function ProductsPage() {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [formLoading, setFormLoading] = useState(false);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
+  const [pageSetting, setPageSetting] = useState<PageSettingDTO>({
+    pageNo: 1,
+    pageSize: 10,
+    pageCount: 0,
+  });
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (page: number = 1) => {
     setIsLoading(true);
     try {
-      const [prodRes, catRes] = await Promise.all([productsApi.getAll(), categoriesApi.getAll()]);
-      if (prodRes.isSuccess && prodRes.data) {
-        const sortedProducts = prodRes.data
-          .filter((p) => !p.deleteFlag)
-          .sort((a, b) => a.name.localeCompare(b.name));
-        setProducts(sortedProducts);
+      const isFiltered = !!searchTerm || !!filterCategory;
+      const [dataRes, catRes] = await Promise.all([
+        isFiltered 
+          ? searchApi.search({
+              Name: searchTerm,
+              CategoryId: filterCategory || undefined,
+              PageNumber: page,
+              PageSize: pageSetting.pageSize,
+            })
+          : productsApi.getPaged(page, pageSetting.pageSize),
+        categoriesApi.getAll()
+      ]);
+      
+      if (dataRes.isSuccess && dataRes.data) {
+        setProducts(dataRes.data.items);
+        setPageSetting(dataRes.data.pageSetting);
       }
+      
       if (catRes.isSuccess && catRes.data) {
         const sortedCategories = [...catRes.data].sort((a, b) => a.name.localeCompare(b.name));
         setCategories(sortedCategories);
       }
     } catch { toast("error", "Failed to load products"); }
     finally { setIsLoading(false); }
-  }, []);
+  }, [searchTerm, filterCategory, pageSetting.pageSize]);
 
-  useEffect(() => { void loadData(); }, [loadData]);
+  useEffect(() => { void loadData(1); }, [pageSetting.pageSize]);
+
+  // Handle manual search trigger
+  const handleSearch = () => {
+    void loadData(1);
+  };
 
   const getCategoryName = (id: number) => categories.find((c) => c.id === id)?.name || "Unknown";
-
-  const filtered = products.filter((p) => {
-    const matchesSearch = !searchTerm || p.name.toLowerCase().includes(searchTerm.toLowerCase()) || p.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = !filterCategory || p.categoryId === filterCategory;
-    return matchesSearch && matchesCategory;
-  });
-
-  const totalPages = Math.ceil(filtered.length / pageSize);
-  const paginated = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, filterCategory]);
 
   const openCreate = () => {
     setForm({ name: "", description: "", price: "", stockQuantity: "", categoryId: categories[0]?.id?.toString() || "" });
@@ -158,15 +164,22 @@ export default function ProductsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold text-[var(--text-primary)]">Products</h2>
-            <p className="text-sm text-[var(--text-secondary)] mt-1">{filtered.length} products</p>
+            <p className="text-sm text-[var(--text-secondary)] mt-1">Manage and track your product inventory</p>
           </div>
           <Button onClick={openCreate} icon={<Plus size={18} />}>Add Product</Button>
         </div>
 
         <Card padding="sm">
           <div className="flex flex-col sm:flex-row gap-3 p-2">
-            <div className="flex-1">
-              <Input placeholder="Search products..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} icon={<Search size={18} />} />
+            <div className="flex-1 flex gap-2">
+              <Input 
+                placeholder="Search products..." 
+                value={searchTerm} 
+                onChange={(e) => setSearchTerm(e.target.value)} 
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                icon={<Search size={18} />} 
+              />
+              <Button onClick={handleSearch} variant="secondary">Search</Button>
             </div>
             <div className="flex items-center gap-2">
               <Filter size={16} className="text-[var(--text-tertiary)] shrink-0" />
@@ -179,7 +192,7 @@ export default function ProductsPage() {
         </Card>
 
         <Card padding="none">
-          {isLoading ? (<div className="p-6"><SkeletonTable rows={6} /></div>) : filtered.length === 0 ? (
+          {isLoading ? (<div className="p-6"><SkeletonTable rows={6} /></div>) : products.length === 0 ? (
             <div className="py-16 text-center">
               <Package size={48} className="mx-auto mb-3 text-[var(--text-tertiary)] opacity-50" />
               <p className="text-[var(--text-secondary)]">No products found</p>
@@ -195,7 +208,7 @@ export default function ProductsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {paginated.map((p) => (
+                  {products.map((p) => (
                     <tr key={p.id} className="border-b border-[var(--border-primary)] last:border-0 hover:bg-[var(--bg-hover)] transition-colors">
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
@@ -233,11 +246,11 @@ export default function ProductsPage() {
           )}
         </Card>
 
-        {filtered.length > pageSize && (
+        {pageSetting.pageCount > 1 && (
           <Pagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
+            currentPage={pageSetting.pageNo}
+            totalPages={pageSetting.pageCount}
+            onPageChange={(page) => void loadData(page)}
           />
         )}
 

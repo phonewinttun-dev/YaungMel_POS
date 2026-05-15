@@ -7,6 +7,7 @@ import { Card, CardHeader } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { SkeletonCard } from "@/components/ui/Skeleton";
 import { toast } from "@/components/ui/Toast";
+import { Pagination } from "@/components/ui/Pagination";
 import { reportsApi, summariesApi } from "@/lib/api";
 import type { SummaryDTO, PageSettingDTO } from "@/lib/types";
 import {
@@ -276,29 +277,16 @@ export default function ReportsPage() {
 
           {/* Pagination */}
           {pageSetting.pageCount > 1 && (
-            <div className="flex items-center justify-between mt-6 pt-6 border-t border-[var(--border-primary)]">
-              <p className="text-xs text-[var(--text-tertiary)]">
-                Page {pageSetting.pageNo} of {pageSetting.pageCount}
-              </p>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  disabled={pageSetting.pageNo === 1}
-                  onClick={() => void loadSummaries(pageSetting.pageNo - 1)}
-                  icon={<ChevronLeft size={16} />}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  disabled={pageSetting.pageNo === pageSetting.pageCount}
-                  onClick={() => void loadSummaries(pageSetting.pageNo + 1)}
-                  icon={<ChevronRight size={16} />}
-                >
-                  Next
-                </Button>
+            <div className="mt-6 pt-6 border-t border-[var(--border-primary)]">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <p className="text-xs text-[var(--text-tertiary)]">
+                  Page {pageSetting.pageNo} of {pageSetting.pageCount}
+                </p>
+                <Pagination
+                  currentPage={pageSetting.pageNo}
+                  totalPages={pageSetting.pageCount}
+                  onPageChange={loadSummaries}
+                />
               </div>
             </div>
           )}

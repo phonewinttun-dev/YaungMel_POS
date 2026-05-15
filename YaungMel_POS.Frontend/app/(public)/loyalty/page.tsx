@@ -12,6 +12,7 @@ import { Modal } from "@/components/ui/Modal";
 import { SkeletonTable } from "@/components/ui/Skeleton";
 import { AnimatedPage } from "@/components/ui/AnimatedPage";
 import { toast } from "@/components/ui/Toast";
+import { Pagination } from "@/components/ui/Pagination";
 import { Gift, Search as SearchIcon, UserCheck, Coins, Package, CheckCircle, Shield, AlertTriangle, ArrowRight, Users, LayoutGrid, List, ChevronLeft, ChevronRight, Mail, Phone, Calendar, Trophy } from "lucide-react";
 
 export default function LoyaltyPage() {
@@ -556,44 +557,16 @@ export default function LoyaltyPage() {
 
               {/* Pagination */}
               {accountsData && accountsData.totalCount > accountPageSize && (
-                <div className="flex items-center justify-between mt-6 pt-6 border-t border-[var(--border-primary)]">
-                  <p className="text-xs text-[var(--text-tertiary)]">
-                    Showing <span className="font-semibold text-[var(--text-secondary)]">{(accountPage - 1) * accountPageSize + 1}</span> to <span className="font-semibold text-[var(--text-secondary)]">{Math.min(accountPage * accountPageSize, accountsData.totalCount)}</span> of <span className="font-semibold text-[var(--text-secondary)]">{accountsData.totalCount}</span> accounts
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setAccountPage(p => Math.max(1, p - 1))}
-                      disabled={accountPage === 1}
-                      icon={<ChevronLeft size={16} />}
-                    >
-                      {""}
-                    </Button>
-                    <div className="flex items-center gap-1">
-                      {Array.from({ length: Math.ceil(accountsData.totalCount / accountPageSize) }).map((_, i) => (
-                        <button
-                          key={i}
-                          onClick={() => setAccountPage(i + 1)}
-                          className={`w-8 h-8 rounded-lg text-xs font-medium transition-all ${
-                            accountPage === i + 1
-                            ? "bg-[var(--accent-primary)] text-white shadow-md"
-                            : "hover:bg-[var(--bg-secondary)] text-[var(--text-secondary)]"
-                          }`}
-                        >
-                          {i + 1}
-                        </button>
-                      ))}
-                    </div>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setAccountPage(p => p + 1)}
-                      disabled={accountPage >= Math.ceil(accountsData.totalCount / accountPageSize)}
-                      icon={<ChevronRight size={16} />}
-                    >
-                      {""}
-                    </Button>
+                <div className="mt-6 pt-6 border-t border-[var(--border-primary)]">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <p className="text-xs text-[var(--text-tertiary)]">
+                      Showing <span className="font-semibold text-[var(--text-secondary)]">{(accountPage - 1) * accountPageSize + 1}</span> to <span className="font-semibold text-[var(--text-secondary)]">{Math.min(accountPage * accountPageSize, accountsData.totalCount)}</span> of <span className="font-semibold text-[var(--text-secondary)]">{accountsData.totalCount}</span> accounts
+                    </p>
+                    <Pagination
+                      currentPage={accountPage}
+                      totalPages={Math.ceil(accountsData.totalCount / accountPageSize)}
+                      onPageChange={setAccountPage}
+                    />
                   </div>
                 </div>
               )}

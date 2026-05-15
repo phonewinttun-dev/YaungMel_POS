@@ -127,7 +127,7 @@ namespace YaungMel_POS.Domain.Features.Search
                     })
                     .ToListAsync();
 
-                var pagination = new Pagination(request.PageSize, request.PageNumber, totalCount);
+                var pagination = new Pagination(request.PageNumber, request.PageSize, totalCount);
 
                 return PagedResult<ProductDTO>.Success(products, pagination);
             }
