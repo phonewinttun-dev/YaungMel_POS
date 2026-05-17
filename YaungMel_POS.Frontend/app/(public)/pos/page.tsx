@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { productsApi, categoriesApi, salesApi, pointsApi } from "@/lib/api";
-import type { ProductDTO, CategoryDTO, CartItem } from "@/lib/types";
+import { productsApi, categoriesApi, salesApi, pointsApi, searchApi } from "@/lib/api";
+import type { ProductDTO, CategoryDTO, CartItem, PageSettingDTO } from "@/lib/types";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -31,41 +31,46 @@ export default function POSPage() {
   const [pointLoading, setPointLoading] = useState(false);
   const [pointsAwarded, setPointsAwarded] = useState(false);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 12;
+  const [pageSetting, setPageSetting] = useState<PageSettingDTO>({
+    pageNo: 1,
+    pageSize: 10,
+    pageCount: 0,
+  });
 
-  const loadProducts = useCallback(async () => {
+  const loadProducts = useCallback(async (page: number = 1) => {
     setIsLoading(true);
     try {
-      const [pRes, cRes] = await Promise.all([productsApi.getAvailable(), categoriesApi.getAll()]);
+      const isFiltered = !!searchTerm || !!filterCat;
+      const [pRes, cRes] = await Promise.all([
+        isFiltered
+          ? searchApi.search({
+              Name: searchTerm || undefined,
+              CategoryId: filterCat || undefined,
+              PageNumber: page,
+              PageSize: pageSetting.pageSize,
+            })
+          : productsApi.getPaged(page, pageSetting.pageSize),
+        categoriesApi.getAll()
+      ]);
+      
       if (pRes.isSuccess && pRes.data) {
-        const sortedProducts = pRes.data
-          .filter(p => p.isActive && !p.deleteFlag)
-          .sort((a, b) => a.name.localeCompare(b.name));
-        setProducts(sortedProducts);
+        setProducts(pRes.data.items);
+        setPageSetting(pRes.data.pageSetting);
       }
+      
       if (cRes.isSuccess && cRes.data) {
         const sortedCategories = [...cRes.data].sort((a, b) => a.name.localeCompare(b.name));
         setCategories(sortedCategories);
       }
     } catch { toast("error", "Failed to load products"); }
     finally { setIsLoading(false); }
-  }, []);
+  }, [searchTerm, filterCat, pageSetting.pageSize]);
 
-  useEffect(() => { void loadProducts(); }, [loadProducts]);
+  useEffect(() => { void loadProducts(1); }, [pageSetting.pageSize]);
 
-  const filtered = products.filter((p) => {
-    const matchSearch = !searchTerm || p.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchCat = !filterCat || p.categoryId === filterCat;
-    return matchSearch && matchCat;
-  });
-
-  const totalPages = Math.ceil(filtered.length / pageSize);
-  const paginated = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, filterCat]);
+  const handleSearch = () => {
+    void loadProducts(1);
+  };
 
   const addToCart = (product: ProductDTO) => {
     setCart((prev) => {
@@ -146,7 +151,16 @@ export default function POSPage() {
         {/* Product Grid */}
         <div className="flex-1 flex flex-col min-w-0">
           <div className="flex flex-col sm:flex-row gap-3 mb-4">
-            <div className="flex-1"><Input placeholder="Search products..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} icon={<Search size={18} />} /></div>
+            <div className="flex-1 flex gap-2">
+              <Input 
+                placeholder="Search products..." 
+                value={searchTerm} 
+                onChange={(e) => setSearchTerm(e.target.value)} 
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                icon={<Search size={18} />} 
+              />
+              <Button onClick={handleSearch} variant="secondary">Search</Button>
+            </div>
             <select value={filterCat || ""} onChange={(e) => setFilterCat(e.target.value ? Number(e.target.value) : null)} className="px-3 py-2.5 text-sm rounded-xl bg-[var(--bg-input)] border border-[var(--border-primary)] text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)]">
               <option value="">All Categories</option>
               {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -156,7 +170,7 @@ export default function POSPage() {
           <div className="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3 content-start">
             {isLoading ? Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="h-32 rounded-2xl bg-[var(--bg-tertiary)] animate-[shimmer_1.5s_infinite] bg-[length:200%_100%] bg-gradient-to-r from-[var(--bg-tertiary)] via-[var(--bg-hover)] to-[var(--bg-tertiary)]" />
-            )) : paginated.map((p) => {
+            )) : products.map((p) => {
               const inCart = cart.find((c) => c.product.id === p.id);
 	              return (
 	                <button key={p.id} onClick={() => addToCart(p)} className={`text-left p-4 rounded-2xl border transition-all duration-200 hover:shadow-md cursor-pointer ${inCart ? "bg-[var(--accent-primary-soft)] border-[var(--accent-primary)]" : "bg-[var(--bg-card)] border-[var(--border-primary)] hover:border-[var(--border-secondary)]"}`}>
@@ -181,12 +195,12 @@ export default function POSPage() {
             })}
           </div>
 
-          {filtered.length > pageSize && (
+          {pageSetting.pageCount > 1 && (
             <div className="py-2">
               <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
+                currentPage={pageSetting.pageNo}
+                totalPages={pageSetting.pageCount}
+                onPageChange={(page) => void loadProducts(page)}
               />
             </div>
           )}

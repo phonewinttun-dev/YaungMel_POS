@@ -121,7 +121,7 @@ public class SummaryService : ISummaryService
                     }
                 }).ToListAsync();
 
-            var pagination = new Pagination(request.PageSize, request.PageNumber, totalItems);
+            var pagination = new Pagination(request.PageNumber, request.PageSize, totalItems);
         
             return PagedResult<SummaryDetailDto>.Success(summaries, pagination);
         }

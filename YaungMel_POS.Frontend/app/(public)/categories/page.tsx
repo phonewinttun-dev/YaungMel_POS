@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { categoriesApi } from "@/lib/api";
-import type { CategoryDTO } from "@/lib/types";
+import { categoriesApi, searchApi } from "@/lib/api";
+import type { CategoryDTO, PageSettingDTO } from "@/lib/types";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -25,30 +25,37 @@ export default function CategoriesPage() {
   const [form, setForm] = useState({ name: "", description: "" });
   const [formLoading, setFormLoading] = useState(false);
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 9;
+  const [pageSetting, setPageSetting] = useState<PageSettingDTO>({
+    pageNo: 1,
+    pageSize: 9,
+    pageCount: 0,
+  });
 
-  const loadCategories = useCallback(async () => {
+  const loadCategories = useCallback(async (page: number = 1) => {
     setIsLoading(true);
     try {
-      const res = await categoriesApi.getAll();
+      const isFiltered = !!searchTerm;
+      const res = await (isFiltered
+        ? searchApi.searchCategories({
+          name: searchTerm || undefined,
+          pageNumber: page,
+          pageSize: pageSetting.pageSize,
+        })
+        : categoriesApi.getPaged(page, pageSetting.pageSize));
+
       if (res.isSuccess && res.data) {
-        const sortedCategories = [...res.data].sort((a, b) => a.name.localeCompare(b.name));
-        setCategories(sortedCategories);
+        setCategories(res.data.items);
+        setPageSetting(res.data.pageSetting);
       }
     } catch { toast("error", "Failed to load categories"); }
     finally { setIsLoading(false); }
-  }, []);
+  }, [searchTerm, pageSetting.pageSize]);
 
-  useEffect(() => { void loadCategories(); }, [loadCategories]);
+  useEffect(() => { void loadCategories(1); }, [pageSetting.pageSize]);
 
-  const filtered = categories.filter((c) => !searchTerm || c.name.toLowerCase().includes(searchTerm.toLowerCase()));
-  const totalPages = Math.ceil(filtered.length / pageSize);
-  const paginated = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm]);
+  const handleSearch = () => {
+    void loadCategories(1);
+  };
 
   const openCreate = () => { setForm({ name: "", description: "" }); setEditCat(null); setShowModal(true); };
   const openEdit = (c: CategoryDTO) => { setForm({ name: c.name, description: c.description || "" }); setEditCat(c); setShowModal(true); };
@@ -87,20 +94,29 @@ export default function CategoriesPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h2 className="text-2xl font-bold text-[var(--text-primary)]">Categories</h2>
-            <p className="text-sm text-[var(--text-secondary)] mt-1">{categories.length} categories</p>
+            <p className="text-sm text-[var(--text-secondary)] mt-1">Organize your products with categories</p>
           </div>
           <Button onClick={openCreate} icon={<Plus size={18} />}>Add Category</Button>
         </div>
 
-        <div className="max-w-md">
-          <Input placeholder="Search categories..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} icon={<Search size={18} />} />
-        </div>
+        <Card padding="sm">
+          <div className="flex gap-2 p-2 max-w-md">
+            <Input
+              placeholder="Search categories..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              icon={<Search size={18} />}
+            />
+            <Button onClick={handleSearch} variant="secondary">Search</Button>
+          </div>
+        </Card>
 
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
           </div>
-        ) : filtered.length === 0 ? (
+        ) : categories.length === 0 ? (
           <div className="py-16 text-center">
             <FolderOpen size={48} className="mx-auto mb-3 text-[var(--text-tertiary)] opacity-50" />
             <p className="text-[var(--text-secondary)]">No categories found</p>
@@ -108,7 +124,7 @@ export default function CategoriesPage() {
         ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {paginated.map((c, i) => (
+              {categories.map((c, i) => (
                 <Card key={c.id} hover>
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
@@ -128,11 +144,11 @@ export default function CategoriesPage() {
                 </Card>
               ))}
             </div>
-            {filtered.length > pageSize && (
+            {pageSetting.pageCount > 1 && (
               <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
+                currentPage={pageSetting.pageNo}
+                totalPages={pageSetting.pageCount}
+                onPageChange={(page) => void loadCategories(page)}
               />
             )}
           </>

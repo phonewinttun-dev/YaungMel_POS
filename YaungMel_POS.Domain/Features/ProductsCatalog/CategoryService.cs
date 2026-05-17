@@ -49,7 +49,7 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                     })
                     .ToListAsync();
 
-                var pagination = new Pagination(request.PageSize, request.PageNumber, totalCategories);
+                var pagination = new Pagination(request.PageNumber, request.PageSize, totalCategories);
                 return PagedResult<CategoryDTO>.Success(categories, pagination, "Categories retrieved successfully!");
             }
             catch (Exception ex)

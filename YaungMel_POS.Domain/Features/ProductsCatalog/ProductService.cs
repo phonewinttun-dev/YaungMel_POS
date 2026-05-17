@@ -64,7 +64,7 @@ namespace YaungMel_POS.Domain.Features.ProductsCatalog
                     })
                     .ToListAsync();
 
-                var pagination = new Pagination(request.PageSize, request.PageNumber, totalProducts);
+                var pagination = new Pagination(request.PageNumber, request.PageSize, totalProducts);
                 return PagedResult<ProductDTO>.Success(products, pagination, "Products retrieved successfully!");
             }
             catch (Exception ex)
